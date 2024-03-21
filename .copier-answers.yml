@@ -1,0 +1,10 @@
+# Do not edit - changes here will be overwritten by Copier
+_commit: v0.1.3
+_src_path: gh:fractal-analytics-platform/fractal-tasks-template
+author_email: joel.luethi@uzh.ch
+author_name: Joel Luethi
+package_name: fractal_helper_tasks
+project_name: fractal-helper-tasks
+project_short_description: Collection of Fractal helper tasks
+project_url: ''
+

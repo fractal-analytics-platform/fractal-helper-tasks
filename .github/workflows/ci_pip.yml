@@ -9,13 +9,13 @@ on:
 
 jobs:
 
-  tests_tasks:
+  test:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.9", "3.10", "3.11"]
-    name: "Tasks, Python ${{ matrix.python-version }}, ${{ matrix.os }}"
+    name: "Python ${{ matrix.python-version }}, ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 

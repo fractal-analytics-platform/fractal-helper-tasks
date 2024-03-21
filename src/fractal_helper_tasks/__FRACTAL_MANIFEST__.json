@@ -131,6 +131,59 @@
         "mem": 1000
       },
       "docs_info": "Workaround task to manually change the hard-coded metadata components\nA fractal workflow sets them to the mip.zarr components after running the\nmaximum intensity projection task. This resets them to the 3D components."
+    },
+    {
+      "name": "Drop T dimension",
+      "executable": "drop_t_dimension.py",
+      "input_type": "zarr",
+      "output_type": "zarr",
+      "meta": {
+        "cpus_per_task": 2,
+        "mem": 8000
+      },
+      "docs_info": "Drops singleton t dimension.",
+      "args_schema": {
+        "title": "DropTDimension",
+        "type": "object",
+        "properties": {
+          "input_paths": {
+            "title": "Input Paths",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "This parameter is not used by this task. This task only supports a single input path. (standard argument for Fractal tasks, managed by Fractal server)."
+          },
+          "output_path": {
+            "title": "Output Path",
+            "type": "string",
+            "description": "Path were the output of this task is stored. Example: `\"/some/path/\"` => puts the new OME-Zarr file in that folder. (standard argument for Fractal tasks, managed by Fractal server)."
+          },
+          "component": {
+            "title": "Component",
+            "type": "string",
+            "description": "Path to the OME-Zarr image in the OME-Zarr plate that is processed. Component is typically changed by the `copy_ome_zarr` task before, to point to a new mip Zarr file. Example: `\"some_plate_mip.zarr/B/03/0\"`. (standard argument for Fractal tasks, managed by Fractal server)."
+          },
+          "metadata": {
+            "title": "Metadata",
+            "type": "object",
+            "description": "Dictionary containing metadata about the OME-Zarr. This task requires the key `copy_ome_zarr` to be present in the metadata (as defined in `copy_ome_zarr` task). (standard argument for Fractal tasks, managed by Fractal server)."
+          },
+          "suffix": {
+            "title": "Suffix",
+            "default": "no_T",
+            "type": "string",
+            "description": "Suffix to be used for the new Zarr image. If overwrite_input is True, this file is only temporary."
+          }
+        },
+        "required": [
+          "input_paths",
+          "output_path",
+          "component",
+          "metadata"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
   "has_args_schemas": true,

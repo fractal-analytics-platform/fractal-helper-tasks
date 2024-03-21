@@ -1,0 +1,15 @@
+LICENSE
+README.md
+pyproject.toml
+src/fractal_helper_tasks/__FRACTAL_MANIFEST__.json
+src/fractal_helper_tasks/__init__.py
+src/fractal_helper_tasks/thresholding_task.py
+src/fractal_helper_tasks.egg-info/PKG-INFO
+src/fractal_helper_tasks.egg-info/SOURCES.txt
+src/fractal_helper_tasks.egg-info/dependency_links.txt
+src/fractal_helper_tasks.egg-info/requires.txt
+src/fractal_helper_tasks.egg-info/top_level.txt
+tests/test_thresholding_task.py
+tests/test_valid_args_schemas.py
+tests/test_valid_manifest.py
+tests/test_valid_task_interface.py

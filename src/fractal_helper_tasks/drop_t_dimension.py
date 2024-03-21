@@ -105,6 +105,7 @@ def drop_t_dimension(
 
     # Load 0-th level
     data_tczyx = da.from_zarr(zarrurl_old + "/0")
+    # TODO: Check that T dimension is actually a singleton.
     new_data = data_tczyx[0, ...]
     # Write to disk (triggering execution)
     logger.debug(f"Writing Zarr without T dimension to {zarrurl_new}")

@@ -83,54 +83,7 @@
         "cpus_per_task": 2,
         "mem": 8000
       },
-      "docs_info": "This task loads the 2D segmentation, replicates it along the Z slice and\nstores it back into the 3D OME-Zarr image.\n\nThis is a temporary workaround task, as long as we store 2D data in\na separate OME-Zarr file from the 3D data. Also, some assumptions are made\non the metadata structure, generalization to be tested."
-    },
-    {
-      "name": "Convert Metadata Components 2D to 3D",
-      "executable": "convert_metadata_components_2D_to_3D.py",
-      "input_type": "zarr",
-      "output_type": "zarr",
-      "args_schema": {
-        "title": "ConvertMetadataComponents2dTo3d",
-        "type": "object",
-        "properties": {
-          "input_paths": {
-            "title": "Input Paths",
-            "description": "List of paths to the input files (Fractal managed)"
-          },
-          "output_path": {
-            "title": "Output Path",
-            "description": "Path to the output file (Fractal managed)"
-          },
-          "metadata": {
-            "title": "Metadata",
-            "description": "Metadata dictionary (Fractal managed)"
-          },
-          "from_2d_to_3d": {
-            "title": "From 2D To 3D",
-            "default": true,
-            "type": "boolean",
-            "description": "If True, removes the suffix. If False, adds the suffix to the metadata"
-          },
-          "suffix": {
-            "title": "Suffix",
-            "default": "mip",
-            "type": "string",
-            "description": "Suffix of the 2D OME-Zarr"
-          }
-        },
-        "required": [
-          "input_paths",
-          "output_path",
-          "metadata"
-        ],
-        "additionalProperties": false
-      },
-      "meta": {
-        "cpus_per_task": 1,
-        "mem": 1000
-      },
-      "docs_info": "Workaround task to manually change the hard-coded metadata components\nA fractal workflow sets them to the mip.zarr components after running the\nmaximum intensity projection task. This resets them to the 3D components."
+      "docs_info": "## convert_2D_segmentation_to_3D\nThis task loads the 2D segmentation, replicates it along the Z slice and\nstores it back into the 3D OME-Zarr image.\n\nThis is a temporary workaround task, as long as we store 2D data in\na separate OME-Zarr file from the 3D data. Also, some assumptions are made\non the metadata structure, generalization to be tested.\n"
     },
     {
       "name": "Drop T dimension",
@@ -142,7 +95,7 @@
         "cpus_per_task": 2,
         "mem": 8000
       },
-      "docs_info": "Drops singleton t dimension.",
+      "docs_info": "## drop_t_dimension\nDrops singleton t dimension.\n",
       "args_schema": {
         "title": "DropTDimension",
         "type": "object",

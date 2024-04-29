@@ -215,9 +215,9 @@ def convert_2D_segmentation_to_3D(
     )
     logger.info(f"Saved {new_label_name} to 3D Zarr at full resolution")
     # 4) Build pyramids for label image
-    label_meta = load_NgffImageMeta(f"{zarr_url}/labels/{label_name}")
+    label_meta = load_NgffImageMeta(f"{zarr_url}/labels/{new_label_name}")
     build_pyramid(
-        zarrurl=f"{zarr_3D_url}/labels/{label_name}",
+        zarrurl=f"{zarr_3D_url}/labels/{new_label_name}",
         overwrite=overwrite,
         num_levels=label_meta.num_levels,
         coarsening_xy=label_meta.coarsening_xy,

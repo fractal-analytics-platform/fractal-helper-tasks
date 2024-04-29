@@ -42,6 +42,9 @@
     },
     {
       "name": "Convert 2D segmentation to 3D",
+      "input_types": {
+        "is_3D": true
+      },
       "executable_parallel": "convert_2D_segmentation_to_3D.py",
       "meta_parallel": {
         "cpus_per_task": 2,

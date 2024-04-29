@@ -200,7 +200,7 @@ def convert_2D_segmentation_to_3D(
 
     # 3) Save changed label image to OME-Zarr
     label_dtype = np.uint32
-    store = zarr.storage.FSStore(f"{zarr_3D_url}/labels/{label_name}/0")
+    store = zarr.storage.FSStore(f"{zarr_3D_url}/labels/{new_label_name}/0")
     new_label_array = zarr.create(
         shape=label_img_3D.shape,
         chunks=chunks,
@@ -244,6 +244,9 @@ def convert_2D_segmentation_to_3D(
                 overwrite=overwrite,
                 table_attrs=table_attrs,
             )
+
+    # FIXME: Set a filter for is_3D = True
+
     logger.info("Finished 2D to 3D conversion")
 
 

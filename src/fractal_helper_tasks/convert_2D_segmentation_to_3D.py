@@ -73,18 +73,19 @@ def make_zattrs_3D(attrs, z_pixel_size, new_label_name):
 
 def check_table_validity(new_table_names, old_table_names):
     """Validate table mapping between old & new tables."""
-    if len(new_table_names) != len(old_table_names):
-        raise ValueError(
-            "The number of new table names must match the number of old "
-            f"table names. Instead, the task got {len(new_table_names)}"
-            "new table names vs. {len(old_table_names)} old table names."
-            "Check the task configuration, specifically `new_table_names`"
-        )
-    if len(set(new_table_names)) != len(new_table_names):
-        raise ValueError(
-            "The new table names must be unique. Instead, the task got "
-            f"{new_table_names}"
-        )
+    if new_table_names and old_table_names:
+        if len(new_table_names) != len(old_table_names):
+            raise ValueError(
+                "The number of new table names must match the number of old "
+                f"table names. Instead, the task got {len(new_table_names)}"
+                "new table names vs. {len(old_table_names)} old table names."
+                "Check the task configuration, specifically `new_table_names`"
+            )
+        if len(set(new_table_names)) != len(new_table_names):
+            raise ValueError(
+                "The new table names must be unique. Instead, the task got "
+                f"{new_table_names}"
+            )
 
 
 @validate_arguments

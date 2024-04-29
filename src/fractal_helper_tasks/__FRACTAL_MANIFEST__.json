@@ -3,6 +3,9 @@
   "task_list": [
     {
       "name": "Drop T Dimension",
+      "output_types": {
+        "has_t": false
+      },
       "executable_non_parallel": "drop_t_dimension.py",
       "meta_non_parallel": {
         "cpus_per_task": 2,

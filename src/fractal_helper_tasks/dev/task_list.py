@@ -7,6 +7,7 @@ TASK_LIST = [
         name="Drop T Dimension",
         executable="drop_t_dimension.py",
         meta={"cpus_per_task": 2, "mem": 8000},
+        output_types=dict(has_t=False),
     ),
     ParallelTask(
         name="Convert 2D segmentation to 3D",

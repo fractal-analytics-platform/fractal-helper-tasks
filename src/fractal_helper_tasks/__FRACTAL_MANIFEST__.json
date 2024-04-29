@@ -1,35 +1,68 @@
 {
-  "manifest_version": "1",
+  "manifest_version": "2",
   "task_list": [
     {
+      "name": "Drop T Dimension",
+      "executable_non_parallel": "drop_t_dimension.py",
+      "meta_non_parallel": {
+        "cpus_per_task": 2,
+        "mem": 8000
+      },
+      "args_schema_non_parallel": {
+        "title": "DropTDimension",
+        "type": "object",
+        "properties": {
+          "zarr_url": {
+            "title": "Zarr Url",
+            "type": "string",
+            "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
+          },
+          "suffix": {
+            "title": "Suffix",
+            "default": "no_T",
+            "type": "string",
+            "description": "Suffix to be used for the new Zarr image. If overwrite_input is True, this file is only temporary."
+          },
+          "overwrite_input": {
+            "title": "Overwrite Input",
+            "default": false,
+            "type": "boolean",
+            "description": "Whether"
+          }
+        },
+        "required": [
+          "zarr_url"
+        ],
+        "additionalProperties": false
+      },
+      "docs_info": "## drop_t_dimension\nDrops singleton t dimension.\n"
+    },
+    {
       "name": "Convert 2D segmentation to 3D",
-      "executable": "convert_2D_segmentation_to_3D.py",
-      "input_type": "zarr",
-      "output_type": "zarr",
-      "args_schema": {
+      "executable_parallel": "convert_2D_segmentation_to_3D.py",
+      "meta_parallel": {
+        "cpus_per_task": 2,
+        "mem": 8000
+      },
+      "args_schema_parallel": {
         "title": "Convert2dSegmentationTo3d",
         "type": "object",
         "properties": {
-          "input_paths": {
-            "title": "Input Paths",
-            "description": "List of paths to the input files (Fractal managed)"
-          },
-          "output_path": {
-            "title": "Output Path",
-            "description": "Path to the output file (Fractal managed)"
-          },
-          "component": {
-            "title": "Component",
-            "description": "Component name, e.g. \"plate_name.zarr/B/03/0\" (Fractal managed)"
-          },
-          "metadata": {
-            "title": "Metadata",
-            "description": "Metadata dictionary (Fractal managed)"
+          "zarr_url": {
+            "title": "Zarr Url",
+            "type": "string",
+            "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
           },
           "label_name": {
             "title": "Label Name",
             "type": "string",
             "description": "Name of the label to copy from 2D OME-Zarr to 3D OME-Zarr"
+          },
+          "level": {
+            "title": "Level",
+            "default": 0,
+            "type": "integer",
+            "description": "Level of the 2D OME-Zarr label to copy from"
           },
           "ROI_tables_to_copy": {
             "title": "Roi Tables To Copy",
@@ -50,17 +83,21 @@
             "items": {},
             "description": "Optionally overwriting the names of the ROI tables in the 3D OME-Zarr"
           },
-          "level": {
-            "title": "Level",
-            "default": 0,
-            "type": "integer",
-            "description": "Level of the 2D OME-Zarr label to copy from"
-          },
-          "suffix": {
-            "title": "Suffix",
-            "default": "mip",
+          "plate_suffix": {
+            "title": "Plate Suffix",
+            "default": "_mip",
             "type": "string",
-            "description": "Suffix of the 2D OME-Zarr to copy from"
+            "description": "Suffix of the 2D OME-Zarr that needs to be removed to generate the path to the 3D OME-Zarr. If the 2D OME-Zarr is \"/path/to/my_plate_mip.zarr/B/03/0\" and the 3D OME-Zarr is located in \"/path/to/my_plate.zarr/B/03/0\", the correct suffix is \"_mip\"."
+          },
+          "image_suffix_2D_to_remove": {
+            "title": "Image Suffix 2D To Remove",
+            "type": "string",
+            "description": "If the image name between 2D & 3D don't match, this is the suffix that should be removed from the 2D image. If the 2D image is in \"/path/to/my_plate_mip.zarr/B/03/ 0_registered\" and the 3D image is in \"/path/to/my_plate.zarr/ B/03/0\", the value should be \"_registered\""
+          },
+          "image_suffix_3D_to_add": {
+            "title": "Image Suffix 3D To Add",
+            "type": "string",
+            "description": "If the image name between 2D & 3D don't match, this is the suffix that should be added to the 3D image. If the 2D image is in \"/path/to/my_plate_mip.zarr/B/03/0\" and the 3D image is in \"/path/to/my_plate.zarr/B/03/0_illum_corr\", the value should be \"_illum_corr\"."
           },
           "overwrite": {
             "title": "Overwrite",
@@ -70,74 +107,12 @@
           }
         },
         "required": [
-          "input_paths",
-          "output_path",
-          "component",
-          "metadata",
+          "zarr_url",
           "label_name"
         ],
         "additionalProperties": false
       },
-      "meta": {
-        "parallelization_level": "image",
-        "cpus_per_task": 2,
-        "mem": 8000
-      },
-      "docs_info": "## convert_2D_segmentation_to_3D\nThis task loads the 2D segmentation, replicates it along the Z slice and\nstores it back into the 3D OME-Zarr image.\n\nThis is a temporary workaround task, as long as we store 2D data in\na separate OME-Zarr file from the 3D data. Also, some assumptions are made\non the metadata structure, generalization to be tested.\n"
-    },
-    {
-      "name": "Drop T dimension",
-      "executable": "drop_t_dimension.py",
-      "input_type": "zarr",
-      "output_type": "zarr",
-      "meta": {
-        "parallelization_level": "image",
-        "cpus_per_task": 2,
-        "mem": 8000
-      },
-      "docs_info": "## drop_t_dimension\nDrops singleton t dimension.\n",
-      "args_schema": {
-        "title": "DropTDimension",
-        "type": "object",
-        "properties": {
-          "input_paths": {
-            "title": "Input Paths",
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "This parameter is not used by this task. This task only supports a single input path. (standard argument for Fractal tasks, managed by Fractal server)."
-          },
-          "output_path": {
-            "title": "Output Path",
-            "type": "string",
-            "description": "Path were the output of this task is stored. Example: `\"/some/path/\"` => puts the new OME-Zarr file in that folder. (standard argument for Fractal tasks, managed by Fractal server)."
-          },
-          "component": {
-            "title": "Component",
-            "type": "string",
-            "description": "Path to the OME-Zarr image in the OME-Zarr plate that is processed. Component is typically changed by the `copy_ome_zarr` task before, to point to a new mip Zarr file. Example: `\"some_plate_mip.zarr/B/03/0\"`. (standard argument for Fractal tasks, managed by Fractal server)."
-          },
-          "metadata": {
-            "title": "Metadata",
-            "type": "object",
-            "description": "Dictionary containing metadata about the OME-Zarr. This task requires the key `copy_ome_zarr` to be present in the metadata (as defined in `copy_ome_zarr` task). (standard argument for Fractal tasks, managed by Fractal server)."
-          },
-          "suffix": {
-            "title": "Suffix",
-            "default": "no_T",
-            "type": "string",
-            "description": "Suffix to be used for the new Zarr image. If overwrite_input is True, this file is only temporary."
-          }
-        },
-        "required": [
-          "input_paths",
-          "output_path",
-          "component",
-          "metadata"
-        ],
-        "additionalProperties": false
-      }
+      "docs_info": "## convert_2D_segmentation_to_3D\nConvert 2D segmentation to 3D segmentation.\n\nThis task loads the 2D segmentation, replicates it along the Z slice and\nstores it back into the 3D OME-Zarr image.\n\nThis is a temporary workaround task, as long as we store 2D data in\na separate OME-Zarr file from the 3D data. If the 2D & 3D OME-Zarr images\nhave different suffixes in their name, use `image_suffix_2D_to_remove` &\n`image_suffix_3D_to_add`. If their base names are different, this task\ndoes not support processing them at the moment.\n"
     }
   ],
   "has_args_schemas": true,

@@ -1,7 +1,7 @@
 # Project metadata (see https://peps.python.org/pep-0621)
 [project]
 name = "fractal-helper-tasks"
-version = "0.0.1"
+version = "0.1.0a5"
 description = "Collection of Fractal helper tasks"
 readme = "README.md"
 license = { text = "BSD-3-Clause" }
@@ -10,9 +10,9 @@ authors = [
 ]
 
 # Required Python version and dependencies
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
-    "fractal-tasks-core==0.14.2"
+    "fractal-tasks-core==1.0.0"
 ]
 
 # Optional dependencies (e.g. for `pip install -e ".[dev]"`, see
@@ -62,8 +62,14 @@ extend-select = [
 ]
 extend-ignore = [
     "D401", # First line should be in imperative mood (remove to opt in)
+    "C408", # Unnecessary `dict` call
 ]
 
 [tool.ruff.per-file-ignores]
 "tests/*.py" = ["D", "S"]
 "setup.py" = ["D"]
+
+[tool.deptry]
+exclude = [
+  'tests', 'examples'
+]

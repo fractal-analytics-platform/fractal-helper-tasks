@@ -1,45 +1,48 @@
-"""Fractal task to convert 2D segmentations into 3D segmentations"""
+"""Fractal task to convert 2D segmentations into 3D segmentations."""
 import logging
-from pathlib import Path
+from typing import Optional
 
 import anndata as ad
 import dask.array as da
 import numpy as np
 import zarr
-from pydantic.decorator import validate_arguments
-from fractal_tasks_core.ngff.zarr_utils import load_NgffImageMeta 
 from fractal_tasks_core.labels import prepare_label_group
+from fractal_tasks_core.ngff.zarr_utils import load_NgffImageMeta
 from fractal_tasks_core.pyramids import build_pyramid
 from fractal_tasks_core.tables import write_table
+from pydantic.decorator import validate_arguments
 
 logger = logging.getLogger(__name__)
 
 
-def read_table_and_attrs(zarr_url: Path, roi_table):
-    table_url = zarr_url / f"tables/{roi_table}"
+def read_table_and_attrs(zarr_url: str, roi_table):
+    """Read table & attrs from Zarr Anndata tables."""
+    table_url = f"{zarr_url}/tables/{roi_table}"
     table = ad.read_zarr(table_url)
     table_attrs = get_zattrs(table_url)
     return table, table_attrs
 
 
 def update_table_metadata(group_tables, table_name):
+    """Update table metadata."""
     if "tables" not in group_tables.attrs:
         group_tables.attrs["tables"] = [table_name]
     elif table_name not in group_tables.attrs["tables"]:
-        group_tables.attrs["tables"] = group_tables.attrs["tables"] + [
-            table_name
-        ]
+        group_tables.attrs["tables"] = group_tables.attrs["tables"] + [table_name]
 
 
 def get_zattrs(zarr_url):
+    """Get zattrs of a Zarr as a dictionary."""
     with zarr.open(zarr_url, mode="r") as zarr_img:
         return zarr_img.attrs.asdict()
 
 
 def make_zattrs_3D(attrs, z_pixel_size, new_label_name):
     """
+    Creates 3D zattrs based on 2D attrs.
+
     Performs the following checks:
-    1) If the label image has 2 axes, add a Z axis and updadte the 
+    1) If the label image has 2 axes, add a Z axis and updadte the
     coordinateTransformations
     2) Change the label name that is referenced, if a new name is provided
     """
@@ -52,10 +55,9 @@ def make_zattrs_3D(attrs, z_pixel_size, new_label_name):
         attrs["multiscales"][0]["axes"] = [z_axis] + attrs["multiscales"][0]["axes"]
         for i, dataset in enumerate(attrs["multiscales"][0]["datasets"]):
             if len(dataset["coordinateTransformations"][0]["scale"]) == 2:
-                attrs["multiscales"][0]["datasets"][i]\
-                    ["coordinateTransformations"][0]["scale"] = \
-                        [z_pixel_size] + dataset["coordinateTransformations"] \
-                            [0]["scale"]
+                attrs["multiscales"][0]["datasets"][i]["coordinateTransformations"][0][
+                    "scale"
+                ] = [z_pixel_size] + dataset["coordinateTransformations"][0]["scale"]
             else:
                 raise NotImplementedError(
                     f"A dataset with 2 axes {attrs['multiscales'][0]['axes']}"
@@ -70,47 +72,50 @@ def make_zattrs_3D(attrs, z_pixel_size, new_label_name):
 
 
 def check_table_validity(new_table_names, old_table_names):
-    if len(new_table_names) != len(old_table_names):
-        raise ValueError(
-            "The number of new table names must match the number of old "
-            f"table names. Instead, the task got {len(new_table_names)}"
-            "new table names vs. {len(old_table_names)} old table names."
-            "Check the task configuration, specifically `new_table_names`"
-        )
-    if len(set(new_table_names)) != len(new_table_names):
-        raise ValueError(
-            "The new table names must be unique. Instead, the task got "
-            f"{new_table_names}"
-        )
+    """Validate table mapping between old & new tables."""
+    if new_table_names and old_table_names:
+        if len(new_table_names) != len(old_table_names):
+            raise ValueError(
+                "The number of new table names must match the number of old "
+                f"table names. Instead, the task got {len(new_table_names)}"
+                "new table names vs. {len(old_table_names)} old table names."
+                "Check the task configuration, specifically `new_table_names`"
+            )
+        if len(set(new_table_names)) != len(new_table_names):
+            raise ValueError(
+                "The new table names must be unique. Instead, the task got "
+                f"{new_table_names}"
+            )
+
 
 @validate_arguments
 def convert_2D_segmentation_to_3D(
-    input_paths,
-    output_path,
-    component,
-    metadata,
+    zarr_url: str,
     label_name: str,
-    ROI_tables_to_copy: list[str] = None,
-    new_label_name: str = None,
-    new_table_names: list = None,
     level: int = 0,
-    suffix: str = "mip",
+    ROI_tables_to_copy: Optional[list[str]] = None,
+    new_label_name: Optional[str] = None,
+    new_table_names: Optional[list] = None,
+    plate_suffix: str = "_mip",
+    image_suffix_2D_to_remove: Optional[str] = None,
+    image_suffix_3D_to_add: Optional[str] = None,
     overwrite: bool = False,
-):
+) -> None:
     """
+    Convert 2D segmentation to 3D segmentation.
+
     This task loads the 2D segmentation, replicates it along the Z slice and
     stores it back into the 3D OME-Zarr image.
 
     This is a temporary workaround task, as long as we store 2D data in
-    a separate OME-Zarr file from the 3D data. Also, some assumptions are made
-    on the metadata structure, generalization to be tested.
+    a separate OME-Zarr file from the 3D data. If the 2D & 3D OME-Zarr images
+    have different suffixes in their name, use `image_suffix_2D_to_remove` &
+    `image_suffix_3D_to_add`. If their base names are different, this task
+    does not support processing them at the moment.
 
     Args:
-        input_paths: List of paths to the input files (Fractal managed)
-        output_path: Path to the output file (Fractal managed)
-        component: Component name, e.g. "plate_name.zarr/B/03/0"
-            (Fractal managed)
-        metadata: Metadata dictionary (Fractal managed)
+        zarr_url: Path or url to the individual OME-Zarr image to be processed.
+            (standard argument for Fractal tasks, managed by Fractal server).
         label_name: Name of the label to copy from 2D OME-Zarr to
             3D OME-Zarr
         ROI_tables_to_copy: List of ROI table names to copy from 2D OME-Zarr
@@ -120,18 +125,39 @@ def convert_2D_segmentation_to_3D(
         new_table_names: Optionally overwriting the names of the ROI tables
             in the 3D OME-Zarr
         level: Level of the 2D OME-Zarr label to copy from
-        suffix: Suffix of the 2D OME-Zarr to copy from
-        overwrite: If `True`, overwrite existing label and ROI tables in the 
+        plate_suffix: Suffix of the 2D OME-Zarr that needs to be removed to
+            generate the path to the 3D OME-Zarr. If the 2D OME-Zarr is
+            "/path/to/my_plate_mip.zarr/B/03/0" and the 3D OME-Zarr is located
+            in "/path/to/my_plate.zarr/B/03/0", the correct suffix is "_mip".
+        image_suffix_2D_to_remove: If the image name between 2D & 3D don't
+            match, this is the suffix that should be removed from the 2D image.
+            If the 2D image is in "/path/to/my_plate_mip.zarr/B/03/
+            0_registered" and the 3D image is in "/path/to/my_plate.zarr/
+            B/03/0", the value should be "_registered"
+        image_suffix_3D_to_add: If the image name between 2D & 3D don't
+            match, this is the suffix that should be added to the 3D image.
+            If the 2D image is in "/path/to/my_plate_mip.zarr/B/03/0" and the
+            3D image is in "/path/to/my_plate.zarr/B/03/0_illum_corr", the
+            value should be "_illum_corr".
+        overwrite: If `True`, overwrite existing label and ROI tables in the
             3D OME-Zarr
     """
     logger.info("Starting 2D to 3D conversion")
+    # Normalize zarr_url
+    zarr_url = zarr_url.rstrip("/")
     # 0) Preparation
     if level != 0:
         raise NotImplementedError("Only level 0 is supported at the moment")
-    zarr_url = Path(input_paths[0]) / component
-    zarr_3D_url = Path(output_path) / component.replace(
-        f"_{suffix}.zarr", ".zarr"
-    )
+    zarr_3D_url = zarr_url.replace(f"{plate_suffix}.zarr", ".zarr")
+    # Handle changes to image name
+    # (would get easier if projections were subgroups!)
+    if image_suffix_2D_to_remove:
+        zarr_3D_url = zarr_3D_url.rstrip(image_suffix_2D_to_remove)
+    if image_suffix_3D_to_add:
+        zarr_3D_url += image_suffix_3D_to_add
+
+    # FIXME: Check whether 3D Zarr actually exists
+
     if new_label_name is None:
         new_label_name = label_name
     if new_table_names is None:
@@ -157,7 +183,7 @@ def convert_2D_segmentation_to_3D(
 
     # Prepare the output label group
     # Get the label_attrs correctly (removes hack below)
-    label_attrs = get_zattrs(zarr_url = zarr_url / "labels" / label_name)
+    label_attrs = get_zattrs(zarr_url=f"{zarr_url}/labels/{label_name}")
     label_attrs = make_zattrs_3D(label_attrs, z_pixel_size, new_label_name)
     output_label_group = prepare_label_group(
         image_group=zarr.group(zarr_3D_url),
@@ -167,16 +193,14 @@ def convert_2D_segmentation_to_3D(
         logger=logger,
     )
 
-    logger.info(
-        f"Helper function `prepare_label_group` returned {output_label_group=}"
-    )
+    logger.info(f"Helper function `prepare_label_group` returned {output_label_group=}")
 
     # 2) Create the 3D stack of the label image
     label_img_3D = da.stack([label_img.squeeze()] * new_z_planes)
 
     # 3) Save changed label image to OME-Zarr
     label_dtype = np.uint32
-    store = zarr.storage.FSStore(f"{zarr_3D_url}/labels/{label_name}/0")
+    store = zarr.storage.FSStore(f"{zarr_3D_url}/labels/{new_label_name}/0")
     new_label_array = zarr.create(
         shape=label_img_3D.shape,
         chunks=chunks,
@@ -191,9 +215,9 @@ def convert_2D_segmentation_to_3D(
     )
     logger.info(f"Saved {new_label_name} to 3D Zarr at full resolution")
     # 4) Build pyramids for label image
-    label_meta = load_NgffImageMeta(zarr_url / "labels" / label_name)
+    label_meta = load_NgffImageMeta(f"{zarr_url}/labels/{label_name}")
     build_pyramid(
-        zarrurl=f"{zarr_3D_url}/labels/{label_name}",
+        zarrurl=f"{zarr_3D_url}/labels/{new_label_name}",
         overwrite=overwrite,
         num_levels=label_meta.num_levels,
         coarsening_xy=label_meta.coarsening_xy,
@@ -208,10 +232,7 @@ def convert_2D_segmentation_to_3D(
         for i, ROI_table in enumerate(ROI_tables_to_copy):
             new_table_name = new_table_names[i]
             logger.info(f"Copying ROI table {ROI_table} as {new_table_name}")
-            roi_an, table_attrs = read_table_and_attrs(
-                Path(zarr_url), 
-                ROI_table
-            )
+            roi_an, table_attrs = read_table_and_attrs(zarr_url, ROI_table)
             nb_rois = len(roi_an.X)
             # Set the new Z values to span the whole ROI
             roi_an.X[:, 5] = np.array([z_pixel_size * new_z_planes] * nb_rois)
@@ -221,11 +242,12 @@ def convert_2D_segmentation_to_3D(
                 table_name=new_table_name,
                 table=roi_an,
                 overwrite=overwrite,
-                logger=logger,
                 table_attrs=table_attrs,
             )
+
+    # FIXME: Set a filter for is_3D = True
+
     logger.info("Finished 2D to 3D conversion")
-    return {}
 
 
 if __name__ == "__main__":

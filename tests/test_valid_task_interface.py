@@ -6,8 +6,7 @@ from subprocess import PIPE
 import pytest
 from devtools import debug
 
-from . import MANIFEST
-from . import PACKAGE_DIR
+from . import MANIFEST, PACKAGE_DIR
 
 
 def validate_command(cmd: str):
@@ -50,10 +49,14 @@ def test_task_interface(task, tmp_path):
         args = dict(wrong_arg_1=123, wrong_arg_2=[1, 2, 3])
         json.dump(args, fout, indent=4)
 
-    task_path = (PACKAGE_DIR / task["executable"]).as_posix()
-    cmd = (
-        f"python {task_path} "
-        f"-j {tmp_file_args} "
-        f"--metadata-out {tmp_file_metadiff}"
-    )
-    validate_command(cmd)
+    for key in ["executable_non_parallel", "executable_parallel"]:
+        executable = task.get(key)
+        if executable is None:
+            continue
+        task_path = (PACKAGE_DIR / executable).as_posix()
+        cmd = (
+            f"python {task_path} "
+            f"--args-json {tmp_file_args} "
+            f"--out-json {tmp_file_metadiff}"
+        )
+        validate_command(cmd)

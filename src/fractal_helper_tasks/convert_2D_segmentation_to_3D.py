@@ -183,7 +183,7 @@ def convert_2D_segmentation_to_3D(
 
     # Prepare the output label group
     # Get the label_attrs correctly (removes hack below)
-    label_attrs = get_zattrs(zarr_url=zarr_url / "labels" / label_name)
+    label_attrs = get_zattrs(zarr_url=f"{zarr_url}/labels/{label_name}")
     label_attrs = make_zattrs_3D(label_attrs, z_pixel_size, new_label_name)
     output_label_group = prepare_label_group(
         image_group=zarr.group(zarr_3D_url),
@@ -215,7 +215,7 @@ def convert_2D_segmentation_to_3D(
     )
     logger.info(f"Saved {new_label_name} to 3D Zarr at full resolution")
     # 4) Build pyramids for label image
-    label_meta = load_NgffImageMeta(zarr_url / "labels" / label_name)
+    label_meta = load_NgffImageMeta(f"{zarr_url}/labels/{label_name}")
     build_pyramid(
         zarrurl=f"{zarr_3D_url}/labels/{label_name}",
         overwrite=overwrite,

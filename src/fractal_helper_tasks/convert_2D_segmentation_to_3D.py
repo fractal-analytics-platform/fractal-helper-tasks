@@ -1,6 +1,6 @@
 """Fractal task to convert 2D segmentations into 3D segmentations"""
 import logging
-from pathlib import Path
+from typing import Optional
 
 import anndata as ad
 import dask.array as da
@@ -15,8 +15,8 @@ from fractal_tasks_core.tables import write_table
 logger = logging.getLogger(__name__)
 
 
-def read_table_and_attrs(zarr_url: Path, roi_table):
-    table_url = zarr_url / f"tables/{roi_table}"
+def read_table_and_attrs(zarr_url: str, roi_table):
+    table_url = f"{zarr_url}/tables/{roi_table}"
     table = ad.read_zarr(table_url)
     table_attrs = get_zattrs(table_url)
     return table, table_attrs
@@ -85,32 +85,30 @@ def check_table_validity(new_table_names, old_table_names):
 
 @validate_arguments
 def convert_2D_segmentation_to_3D(
-    input_paths,
-    output_path,
-    component,
-    metadata,
+    zarr_url: str,
     label_name: str,
     ROI_tables_to_copy: list[str] = None,
     new_label_name: str = None,
     new_table_names: list = None,
     level: int = 0,
-    suffix: str = "mip",
+    plate_suffix: str = "_mip",
+    image_suffix_2D_to_remove: Optional[str] = None,
+    image_suffix_3D_to_add: Optional[str] = None,
     overwrite: bool = False,
-):
+) -> None:
     """
     This task loads the 2D segmentation, replicates it along the Z slice and
     stores it back into the 3D OME-Zarr image.
 
     This is a temporary workaround task, as long as we store 2D data in
-    a separate OME-Zarr file from the 3D data. Also, some assumptions are made
-    on the metadata structure, generalization to be tested.
+    a separate OME-Zarr file from the 3D data. If the 2D & 3D OME-Zarr images 
+    have different suffixes in their name, use `image_suffix_2D_to_remove` & 
+    `image_suffix_3D_to_add`. If their base names are different, this task 
+    does not support processing them at the moment.
 
     Args:
-        input_paths: List of paths to the input files (Fractal managed)
-        output_path: Path to the output file (Fractal managed)
-        component: Component name, e.g. "plate_name.zarr/B/03/0"
-            (Fractal managed)
-        metadata: Metadata dictionary (Fractal managed)
+        zarr_url: Path or url to the individual OME-Zarr image to be processed.
+            (standard argument for Fractal tasks, managed by Fractal server).
         label_name: Name of the label to copy from 2D OME-Zarr to
             3D OME-Zarr
         ROI_tables_to_copy: List of ROI table names to copy from 2D OME-Zarr
@@ -120,18 +118,41 @@ def convert_2D_segmentation_to_3D(
         new_table_names: Optionally overwriting the names of the ROI tables
             in the 3D OME-Zarr
         level: Level of the 2D OME-Zarr label to copy from
-        suffix: Suffix of the 2D OME-Zarr to copy from
+        plate_suffix: Suffix of the 2D OME-Zarr that needs to be removed to
+            generate the path to the 3D OME-Zarr. If the 2D OME-Zarr is 
+            "/path/to/my_plate_mip.zarr/B/03/0" and the 3D OME-Zarr is located 
+            in "/path/to/my_plate.zarr/B/03/0", the correct suffix is "_mip".
+        image_suffix_2D_to_remove: If the image name between 2D & 3D don't 
+            match, this is the suffix that should be removed from the 2D image.
+            If the 2D image is in "/path/to/my_plate_mip.zarr/B/03/
+            0_registered" and the 3D image is in "/path/to/my_plate.zarr/
+            B/03/0", the value should be "_registered"
+        image_suffix_3D_to_add: If the image name between 2D & 3D don't 
+            match, this is the suffix that should be added to the 3D image.
+            If the 2D image is in "/path/to/my_plate_mip.zarr/B/03/0" and the 
+            3D image is in "/path/to/my_plate.zarr/B/03/0_illum_corr", the 
+            value should be "_illum_corr".
         overwrite: If `True`, overwrite existing label and ROI tables in the 
             3D OME-Zarr
     """
     logger.info("Starting 2D to 3D conversion")
+    # Normalize zarr_url
+    zarr_url = zarr_url.rstrip("/")
     # 0) Preparation
     if level != 0:
         raise NotImplementedError("Only level 0 is supported at the moment")
-    zarr_url = Path(input_paths[0]) / component
-    zarr_3D_url = Path(output_path) / component.replace(
-        f"_{suffix}.zarr", ".zarr"
+    zarr_3D_url = zarr_url.replace(
+        f"{plate_suffix}.zarr", ".zarr"
     )
+    # Handle changes to image name 
+    # (would get easier if projections were subgroups!)
+    if image_suffix_2D_to_remove:
+        zarr_3D_url = zarr_3D_url.rstrip(image_suffix_2D_to_remove)
+    if image_suffix_3D_to_add:
+        zarr_3D_url += image_suffix_3D_to_add
+
+    # FIXME: Check whether 3D Zarr actually exists
+
     if new_label_name is None:
         new_label_name = label_name
     if new_table_names is None:
@@ -209,7 +230,7 @@ def convert_2D_segmentation_to_3D(
             new_table_name = new_table_names[i]
             logger.info(f"Copying ROI table {ROI_table} as {new_table_name}")
             roi_an, table_attrs = read_table_and_attrs(
-                Path(zarr_url), 
+                zarr_url, 
                 ROI_table
             )
             nb_rois = len(roi_an.X)
@@ -221,11 +242,9 @@ def convert_2D_segmentation_to_3D(
                 table_name=new_table_name,
                 table=roi_an,
                 overwrite=overwrite,
-                logger=logger,
                 table_attrs=table_attrs,
             )
     logger.info("Finished 2D to 3D conversion")
-    return {}
 
 
 if __name__ == "__main__":

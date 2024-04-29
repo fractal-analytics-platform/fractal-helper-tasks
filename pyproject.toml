@@ -1,7 +1,7 @@
 # Project metadata (see https://peps.python.org/pep-0621)
 [project]
 name = "fractal-helper-tasks"
-version = "0.1.0"
+version = "0.1.0a5"
 description = "Collection of Fractal helper tasks"
 readme = "README.md"
 license = { text = "BSD-3-Clause" }
@@ -68,3 +68,8 @@ extend-ignore = [
 [tool.ruff.per-file-ignores]
 "tests/*.py" = ["D", "S"]
 "setup.py" = ["D"]
+
+[tool.deptry]
+exclude = [
+  'tests', 'examples'
+]

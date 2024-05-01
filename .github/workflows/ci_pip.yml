@@ -30,7 +30,7 @@ jobs:
           cache: "pip"
 
       - name: Install package
-        run: python -m pip install .[dev,test]
+        run: python -m pip install -e .[dev,test]
 
       - name: Install some testing dependencies (hard-coded)
         run: python -m pip install pytest devtools jsonschema requests wget pooch

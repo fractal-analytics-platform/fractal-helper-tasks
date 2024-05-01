@@ -69,11 +69,6 @@ extend-ignore = [
 "tests/*.py" = ["D", "S"]
 "setup.py" = ["D"]
 
-[tool.deptry]
-exclude = [
-  'tests', 'examples'
-]
-
 [tool.coverage.run]
 # Include only the specific package directories for coverage, exclude tests
 include = [

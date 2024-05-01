@@ -73,3 +73,14 @@ extend-ignore = [
 exclude = [
   'tests', 'examples'
 ]
+
+[tool.coverage.run]
+# Include only the specific package directories for coverage, exclude tests
+include = [
+    "src/fractal_helper_tasks/*"
+]
+omit = [
+    "*/tests/*",
+    "*_test.py",
+    "setup.py"
+]

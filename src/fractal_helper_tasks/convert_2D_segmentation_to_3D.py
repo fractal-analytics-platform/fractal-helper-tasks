@@ -113,6 +113,9 @@ def convert_2D_segmentation_to_3D(
     `image_suffix_3D_to_add`. If their base names are different, this task
     does not support processing them at the moment.
 
+    It makes the assumption that the 3D OME-Zarrs are stored in the same place
+    as the 2D OME-Zarrs (same based folder).
+
     Args:
         zarr_url: Path or url to the individual OME-Zarr image to be processed.
             (standard argument for Fractal tasks, managed by Fractal server).

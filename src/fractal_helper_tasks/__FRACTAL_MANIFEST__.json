@@ -118,7 +118,7 @@
         ],
         "additionalProperties": false
       },
-      "docs_info": "## convert_2D_segmentation_to_3D\nConvert 2D segmentation to 3D segmentation.\n\nThis task loads the 2D segmentation, replicates it along the Z slice and\nstores it back into the 3D OME-Zarr image.\n\nThis is a temporary workaround task, as long as we store 2D data in\na separate OME-Zarr file from the 3D data. If the 2D & 3D OME-Zarr images\nhave different suffixes in their name, use `image_suffix_2D_to_remove` &\n`image_suffix_3D_to_add`. If their base names are different, this task\ndoes not support processing them at the moment.\n"
+      "docs_info": "## convert_2D_segmentation_to_3D\nConvert 2D segmentation to 3D segmentation.\n\nThis task loads the 2D segmentation, replicates it along the Z slice and\nstores it back into the 3D OME-Zarr image.\n\nThis is a temporary workaround task, as long as we store 2D data in\na separate OME-Zarr file from the 3D data. If the 2D & 3D OME-Zarr images\nhave different suffixes in their name, use `image_suffix_2D_to_remove` &\n`image_suffix_3D_to_add`. If their base names are different, this task\ndoes not support processing them at the moment.\n\nIt makes the assumption that the 3D OME-Zarrs are stored in the same place \nas the 2D OME-Zarrs (same based folder).\n"
     }
   ],
   "has_args_schemas": true,

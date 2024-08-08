@@ -1,7 +1,28 @@
+# https://peps.python.org/pep-0517/
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+# https://hatch.pypa.io/latest/config/metadata/
+[tool.hatch.version]
+#path = "src/fractal_helper_tasks/__init__.py"
+source = "vcs"
+
+# read more about configuring hatch at:
+# https://hatch.pypa.io/latest/config/build/
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
+sources = ["src"]
+
+# Always include the __FRACTAL_MANIFEST__.json file in the package
+[tool.hatch.build]
+include = ["__FRACTAL_MANIFEST__.json"]
+
+
 # Project metadata (see https://peps.python.org/pep-0621)
 [project]
 name = "fractal-helper-tasks"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Collection of Fractal helper tasks"
 readme = "README.md"
 license = { text = "BSD-3-Clause" }
@@ -12,39 +33,30 @@ authors = [
 # Required Python version and dependencies
 requires-python = ">=3.9"
 dependencies = [
-    "fractal-tasks-core==1.0.0"
+    "fractal-tasks-core==1.2.0"
 ]
 
 # Optional dependencies (e.g. for `pip install -e ".[dev]"`, see
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies)
 [project.optional-dependencies]
-dev = ["devtools", "pytest", "requests", "build", "jsonschema", "pooch"]
+dev = ["devtools", "hatch", "pytest", "requests", "jsonschema", "ruff", "pre-commit", "pooch"]
 test = ["pytest", "pytest-cov"]
-
-# Build options (see https://peps.python.org/pep-0517)
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["fractal_helper_tasks"]
-
-# Always include the __FRACTAL_MANIFEST__.json file in the package
-[tool.setuptools.package-data]
-"*" = ["__FRACTAL_MANIFEST__.json"]
 
 # https://docs.astral.sh/ruff
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py39"
 src = ["src"]
+
 # https://docs.astral.sh/ruff/rules
+[tool.ruff.lint]
+pydocstyle = { convention = "google" }
 select = [
     "E",    # style errors
     "W",    # style warnings
     "F",    # flakes
     "D",    # pydocstyle
+    "D417", # Missing argument descriptions in Docstrings
     "I",    # isort
     "UP",   # pyupgrade
     "C4",   # flake8-comprehensions
@@ -54,20 +66,24 @@ select = [
     "TCH",  # flake8-type-checking
     "TID",  # flake8-tidy-imports
 ]
-
-[tool.ruff.lint]
-pydocstyle = { convention = "numpy" }
 extend-select = [
     "D417", # Missing argument descriptions in Docstrings
 ]
-extend-ignore = [
+ignore = [
     "D401", # First line should be in imperative mood (remove to opt in)
     "C408", # Unnecessary `dict` call
+    "D415", # First line should end with a period (remove to opt in)
+    "UP022" # Used in validate_command test, waiting for template fix
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["D", "S"]
-"setup.py" = ["D"]
+
+# https://docs.astral.sh/ruff/formatter/
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 89
+skip-magic-trailing-comma = false  # default is false
 
 [tool.coverage.run]
 # Include only the specific package directories for coverage, exclude tests

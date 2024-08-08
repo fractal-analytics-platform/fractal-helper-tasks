@@ -1,4 +1,5 @@
 """Fractal task to convert 2D segmentations into 3D segmentations."""
+
 import logging
 from typing import Optional
 
@@ -10,7 +11,7 @@ from fractal_tasks_core.labels import prepare_label_group
 from fractal_tasks_core.ngff.zarr_utils import load_NgffImageMeta
 from fractal_tasks_core.pyramids import build_pyramid
 from fractal_tasks_core.tables import write_table
-from pydantic.decorator import validate_arguments
+from pydantic import validate_call
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +39,7 @@ def get_zattrs(zarr_url):
 
 
 def make_zattrs_3D(attrs, z_pixel_size, new_label_name):
-    """
-    Creates 3D zattrs based on 2D attrs.
+    """Creates 3D zattrs based on 2D attrs.
 
     Performs the following checks:
     1) If the label image has 2 axes, add a Z axis and updadte the
@@ -88,7 +88,7 @@ def check_table_validity(new_table_names, old_table_names):
             )
 
 
-@validate_arguments
+@validate_call
 def convert_2D_segmentation_to_3D(
     zarr_url: str,
     label_name: str,
@@ -101,8 +101,7 @@ def convert_2D_segmentation_to_3D(
     image_suffix_3D_to_add: Optional[str] = None,
     overwrite: bool = False,
 ) -> None:
-    """
-    Convert 2D segmentation to 3D segmentation.
+    """Convert 2D segmentation to 3D segmentation.
 
     This task loads the 2D segmentation, replicates it along the Z slice and
     stores it back into the 3D OME-Zarr image.

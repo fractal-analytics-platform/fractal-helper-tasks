@@ -12,8 +12,7 @@
         "mem": 8000
       },
       "args_schema_non_parallel": {
-        "title": "DropTDimension",
-        "type": "object",
+        "additionalProperties": false,
         "properties": {
           "zarr_url": {
             "title": "Zarr Url",
@@ -21,14 +20,14 @@
             "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
           },
           "suffix": {
-            "title": "Suffix",
             "default": "no_T",
+            "title": "Suffix",
             "type": "string",
             "description": "Suffix to be used for the new Zarr image. If overwrite_input is True, this file is only temporary."
           },
           "overwrite_input": {
-            "title": "Overwrite Input",
             "default": false,
+            "title": "Overwrite Input",
             "type": "boolean",
             "description": "Whether"
           }
@@ -36,7 +35,8 @@
         "required": [
           "zarr_url"
         ],
-        "additionalProperties": false
+        "type": "object",
+        "title": "DropTDimension"
       },
       "docs_info": "## drop_t_dimension\nDrops singleton t dimension.\n"
     },
@@ -51,8 +51,7 @@
         "mem": 8000
       },
       "args_schema_parallel": {
-        "title": "Convert2dSegmentationTo3d",
-        "type": "object",
+        "additionalProperties": false,
         "properties": {
           "zarr_url": {
             "title": "Zarr Url",
@@ -65,17 +64,17 @@
             "description": "Name of the label to copy from 2D OME-Zarr to 3D OME-Zarr"
           },
           "level": {
-            "title": "Level",
             "default": 0,
+            "title": "Level",
             "type": "integer",
             "description": "Level of the 2D OME-Zarr label to copy from"
           },
           "ROI_tables_to_copy": {
-            "title": "Roi Tables To Copy",
-            "type": "array",
             "items": {
               "type": "string"
             },
+            "title": "Roi Tables To Copy",
+            "type": "array",
             "description": "List of ROI table names to copy from 2D OME-Zarr to 3D OME-Zarr"
           },
           "new_label_name": {
@@ -84,14 +83,14 @@
             "description": "Optionally overwriting the name of the label in the 3D OME-Zarr"
           },
           "new_table_names": {
+            "items": {},
             "title": "New Table Names",
             "type": "array",
-            "items": {},
             "description": "Optionally overwriting the names of the ROI tables in the 3D OME-Zarr"
           },
           "plate_suffix": {
-            "title": "Plate Suffix",
             "default": "_mip",
+            "title": "Plate Suffix",
             "type": "string",
             "description": "Suffix of the 2D OME-Zarr that needs to be removed to generate the path to the 3D OME-Zarr. If the 2D OME-Zarr is \"/path/to/my_plate_mip.zarr/B/03/0\" and the 3D OME-Zarr is located in \"/path/to/my_plate.zarr/B/03/0\", the correct suffix is \"_mip\"."
           },
@@ -106,8 +105,8 @@
             "description": "If the image name between 2D & 3D don't match, this is the suffix that should be added to the 3D image. If the 2D image is in \"/path/to/my_plate_mip.zarr/B/03/0\" and the 3D image is in \"/path/to/my_plate.zarr/B/03/0_illum_corr\", the value should be \"_illum_corr\"."
           },
           "overwrite": {
-            "title": "Overwrite",
             "default": false,
+            "title": "Overwrite",
             "type": "boolean",
             "description": "If `True`, overwrite existing label and ROI tables in the 3D OME-Zarr"
           }
@@ -116,11 +115,12 @@
           "zarr_url",
           "label_name"
         ],
-        "additionalProperties": false
+        "type": "object",
+        "title": "Convert2dSegmentationTo3d"
       },
       "docs_info": "## convert_2D_segmentation_to_3D\nConvert 2D segmentation to 3D segmentation.\n\nThis task loads the 2D segmentation, replicates it along the Z slice and\nstores it back into the 3D OME-Zarr image.\n\nThis is a temporary workaround task, as long as we store 2D data in\na separate OME-Zarr file from the 3D data. If the 2D & 3D OME-Zarr images\nhave different suffixes in their name, use `image_suffix_2D_to_remove` &\n`image_suffix_3D_to_add`. If their base names are different, this task\ndoes not support processing them at the moment.\n\nIt makes the assumption that the 3D OME-Zarrs are stored in the same place\nas the 2D OME-Zarrs (same based folder).\n"
     }
   ],
   "has_args_schemas": true,
-  "args_schema_version": "pydantic_v1"
+  "args_schema_version": "pydantic_v2"
 }

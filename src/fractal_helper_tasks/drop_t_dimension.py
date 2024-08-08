@@ -6,6 +6,7 @@
 # This file is derived from a Fractal task core task developed by
 # Tommaso Comparin & Marco Franzon
 """Task to remove singelton T dimension from an OME-Zarr."""
+
 import logging
 from typing import Any
 
@@ -13,14 +14,13 @@ import dask.array as da
 import zarr
 from fractal_tasks_core.ngff import load_NgffImageMeta
 from fractal_tasks_core.pyramids import build_pyramid
-from pydantic.decorator import validate_arguments
+from pydantic import validate_call
 
 logger = logging.getLogger(__name__)
 
 
 def get_attrs_without_t(zarr_url: str):
-    """
-    Generate zattrs without the t dimension.
+    """Generate zattrs without the t dimension.
 
     Args:
         zarr_url: Path to the zarr image
@@ -39,15 +39,14 @@ def get_attrs_without_t(zarr_url: str):
     return zattrs
 
 
-@validate_arguments
+@validate_call
 def drop_t_dimension(
     *,
     zarr_url: str,
     suffix: str = "no_T",
     overwrite_input: bool = False,
 ) -> dict[str, Any]:
-    """
-    Drops singleton t dimension.
+    """Drops singleton t dimension.
 
     Args:
         zarr_url: Path or url to the individual OME-Zarr image to be processed.

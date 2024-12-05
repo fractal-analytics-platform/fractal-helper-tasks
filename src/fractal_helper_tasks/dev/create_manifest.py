@@ -7,4 +7,5 @@ if __name__ == "__main__":
     to the package manifest.
     """
     PACKAGE = "fractal_helper_tasks"
-    create_manifest(package=PACKAGE)
+    AUTHORS = "Joel Luethi"
+    create_manifest(package=PACKAGE, authors=AUTHORS)

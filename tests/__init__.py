@@ -1,7 +1,7 @@
-import fractal_helper_tasks
 import json
 from pathlib import Path
 
+import fractal_helper_tasks
 
 PACKAGE = "fractal_helper_tasks"
 PACKAGE_DIR = Path(fractal_helper_tasks.__file__).parent

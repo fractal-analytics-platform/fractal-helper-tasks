@@ -6,6 +6,9 @@
       "output_types": {
         "has_t": false
       },
+      "tags": [
+        "Singelton time dimension"
+      ],
       "executable_non_parallel": "drop_t_dimension.py",
       "meta_non_parallel": {
         "cpus_per_task": 2,
@@ -45,6 +48,10 @@
       "input_types": {
         "is_3D": false
       },
+      "tags": [
+        "Mixed modality",
+        "2D to 3D workflows"
+      ],
       "executable_parallel": "convert_2D_segmentation_to_3D.py",
       "meta_parallel": {
         "cpus_per_task": 2,
@@ -122,5 +129,6 @@
     }
   ],
   "has_args_schemas": true,
-  "args_schema_version": "pydantic_v2"
+  "args_schema_version": "pydantic_v2",
+  "authors": "Joel Luethi"
 }

@@ -1,3 +1,4 @@
+# Git ignored is sourced from https://github.com/pydev-guide/pyrepo-copier/blob/main/LICENSE
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

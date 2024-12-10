@@ -36,7 +36,7 @@ python -m pip install -e ".[dev]"
 4. The template already includes a sample task ("Thresholding Task"). Whenever
 you change its input parameters or docstring, re-run
 ```console
-python src/fractal_helper_tasks/dev/update_manifest.py
+python src/fractal_helper_tasks/dev/create_manifest.py
 git add src/fractal_helper_tasks/__FRACTAL_MANIFEST__.json
 git commit -m'Update `__FRACTAL_MANIFEST__.json`'
 git push origin main

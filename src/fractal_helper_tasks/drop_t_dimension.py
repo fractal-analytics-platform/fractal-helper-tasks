@@ -5,7 +5,7 @@
 #
 # This file is derived from a Fractal task core task developed by
 # Tommaso Comparin & Marco Franzon
-"""Task to remove singelton T dimension from an OME-Zarr."""
+"""Task to remove singleton T dimension from an OME-Zarr."""
 
 import logging
 from typing import Any

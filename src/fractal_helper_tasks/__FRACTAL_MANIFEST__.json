@@ -7,7 +7,7 @@
         "has_t": false
       },
       "tags": [
-        "Singelton time dimension"
+        "Singleton time dimension"
       ],
       "executable_non_parallel": "drop_t_dimension.py",
       "meta_non_parallel": {

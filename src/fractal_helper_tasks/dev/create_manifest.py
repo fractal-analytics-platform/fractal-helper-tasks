@@ -8,4 +8,8 @@ if __name__ == "__main__":
     """
     PACKAGE = "fractal_helper_tasks"
     AUTHORS = "Joel Luethi"
-    create_manifest(package=PACKAGE, authors=AUTHORS)
+    docs_link = "https://github.com/jluethi/fractal-helper-tasks"
+    if docs_link:
+        create_manifest(package=PACKAGE, authors=AUTHORS, docs_link=docs_link)
+    else:
+        create_manifest(package=PACKAGE, authors=AUTHORS)

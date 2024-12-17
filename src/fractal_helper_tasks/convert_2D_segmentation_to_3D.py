@@ -247,9 +247,14 @@ def convert_2D_segmentation_to_3D(
                 table_attrs=table_attrs,
             )
 
-    # FIXME: Set a filter for is_3D = True
-
     logger.info("Finished 2D to 3D conversion")
+
+    output_dict = dict(
+        filters=dict(
+            types=dict(is_3D=True),
+        )
+    )
+    return output_dict
 
 
 if __name__ == "__main__":

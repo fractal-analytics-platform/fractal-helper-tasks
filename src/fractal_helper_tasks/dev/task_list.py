@@ -9,6 +9,7 @@ TASK_LIST = [
         meta={"cpus_per_task": 2, "mem": 8000},
         output_types=dict(has_t=False),
         tags=["Singleton time dimension"],
+        docs_info="file:docs_info/drop_t_dimension.md",
     ),
     ParallelTask(
         input_types=dict(is_3D=False),
@@ -19,5 +20,6 @@ TASK_LIST = [
             "Mixed modality",
             "2D to 3D workflows",
         ],
+        docs_info="file:docs_info/2d_to_3d.md",
     ),
 ]

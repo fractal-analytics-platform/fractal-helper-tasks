@@ -22,4 +22,14 @@ TASK_LIST = [
         ],
         docs_info="file:docs_info/2d_to_3d.md",
     ),
+    ParallelTask(
+        name="Rechunk OME-Zarr",
+        executable="rechunk_zarr.py",
+        meta={"cpus_per_task": 1, "mem": 4000},
+        tags=[
+            "Rechunking",
+            "Many files",
+        ],
+        docs_info="file:docs_info/rechunk_zarr.md",
+    ),
 ]

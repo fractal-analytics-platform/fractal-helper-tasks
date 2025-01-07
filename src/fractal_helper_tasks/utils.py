@@ -71,11 +71,7 @@ def rechunk_label(
             if chunk_sizes[axis] is not None:
                 new_chunksize[i] = chunk_sizes[axis]
     create_empty_ome_zarr_label(
-        store=new_ngff_image.store
-        + "/"
-        + "labels"
-        + "/"
-        + label,  # FIXME: Set this better?
+        store=new_ngff_image.store + "/" + "labels" + "/" + label,
         on_disk_shape=old_label.on_disk_shape,
         chunks=new_chunksize,
         dtype=old_label.on_disk_dask_array.dtype,

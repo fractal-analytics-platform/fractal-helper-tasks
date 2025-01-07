@@ -53,7 +53,8 @@ def drop_t_dimension(
             (standard argument for Fractal tasks, managed by Fractal server).
         suffix: Suffix to be used for the new Zarr image. If overwrite_input
             is True, this file is only temporary.
-        overwrite_input: Whether
+        overwrite_input: Whether the existing iamge should be overwritten with
+            the new OME-Zarr without the T dimension.
     """
     # Normalize zarr_url
     zarr_url_old = zarr_url.rstrip("/")

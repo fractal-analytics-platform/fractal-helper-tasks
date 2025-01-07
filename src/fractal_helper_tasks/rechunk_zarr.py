@@ -1,4 +1,4 @@
-# Copyright 2024 (C) BioVisionCenter, University of Zurich
+# Copyright 2025 (C) BioVisionCenter, University of Zurich
 #
 # Original authors:
 # Joel Lüthi <joel.luethi@uzh.ch>
@@ -10,8 +10,9 @@ import shutil
 from typing import Any, Optional
 
 import ngio
-from ngio.core.utils import create_empty_ome_zarr_label
 from pydantic import validate_call
+
+from fractal_helper_tasks.utils import normalize_chunk_size_dict, rechunk_label
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ def rechunk_zarr(
     zarr_url: str,
     chunk_sizes: Optional[dict[str, Optional[int]]] = None,
     suffix: str = "rechunked",
+    rechunk_labels: bool = True,
     rebuild_pyramids: bool = True,
     overwrite_input: bool = True,
     overwrite: bool = False,
@@ -38,6 +40,8 @@ def rechunk_zarr(
             sizes. {"z": 10} will just change the Z chunking while keeping
             all other chunk sizes the same as the input.
         suffix: Suffix of the rechunked image.
+        rechunk_labels: Whether to apply the same rechunking to all label
+            images of the OME-Zarr as well.
         rebuild_pyramids: Whether pyramids are built fresh in the rechunked
             image. This has a small performance overhead, but ensures that
             this task is save against off-by-one issues when pyramid levels
@@ -47,11 +51,9 @@ def rechunk_zarr(
         overwrite: Whether to overwrite potential pre-existing output with the
             name zarr_url_suffix.
     """
-    chunk_sizes = chunk_sizes or {}
-    valid_axes = ["t", "c", "z", "y", "x"]
-    for axis in valid_axes:
-        if axis not in chunk_sizes:
-            chunk_sizes[axis] = None
+    logger.info(f"Running `rechunk_zarr` on {zarr_url=} with {chunk_sizes=}.")
+
+    chunk_sizes = normalize_chunk_size_dict(chunk_sizes)
 
     rechunked_zarr_url = zarr_url + f"_{suffix}"
     ngff_image = ngio.NgffImage(zarr_url)
@@ -62,19 +64,27 @@ def rechunk_zarr(
 
     # Compute the chunksize tuple
     new_chunksize = [c[0] for c in chunks]
+    logger.info(f"Initial chunk sizes were: {chunks}")
     # Overwrite chunk_size with user-set chunksize
     for i, axis in enumerate(axes_names):
         if axis in chunk_sizes:
             if chunk_sizes[axis] is not None:
                 new_chunksize[i] = chunk_sizes[axis]
 
-    # TODO: Check for extra axes specified
+    for axis in chunk_sizes:
+        if axis not in axes_names:
+            raise NotImplementedError(
+                f"Rechunking with {axis=} is specified, but the OME-Zarr only "
+                f"has the following axes: {axes_names}"
+            )
+
+    logger.info(f"Chunk sizes after rechunking will be: {new_chunksize=}")
 
     new_ngff_image = ngff_image.derive_new_image(
         store=rechunked_zarr_url,
         name=ngff_image.image_meta.name,
         overwrite=overwrite,
-        copy_labels=False,  # Copy if rechunk labels is not selected?
+        copy_labels=not rechunk_labels,
         copy_tables=True,
         chunks=new_chunksize,
     )
@@ -93,79 +103,37 @@ def rechunk_zarr(
                 ngff_image.get_image(path=path).on_disk_dask_array
             )
 
-    # Copy labels: Loop over them
-    # Labels don't have a channel dimension
-    chunk_sizes["c"] = None
-    label_names = ngff_image.labels.list()
-    for label in label_names:
-        old_label = ngff_image.labels.get_label(name=label)
-        label_level_paths = ngff_image.labels.levels_paths(name=label)
-        # Compute the chunksize tuple
-        chunks = old_label.on_disk_dask_array.chunks
-        new_chunksize = [c[0] for c in chunks]
-        # Overwrite chunk_size with user-set chunksize
-        for i, axis in enumerate(old_label.dataset.on_disk_axes_names):
-            if axis in chunk_sizes:
-                if chunk_sizes[axis] is not None:
-                    new_chunksize[i] = chunk_sizes[axis]
-        create_empty_ome_zarr_label(
-            store=new_ngff_image.store
-            + "/"
-            + "labels"
-            + "/"
-            + label,  # FIXME: Set this better?
-            on_disk_shape=old_label.on_disk_shape,
-            chunks=new_chunksize,
-            dtype=old_label.on_disk_dask_array.dtype,
-            on_disk_axis=old_label.dataset.on_disk_axes_names,
-            pixel_sizes=old_label.dataset.pixel_size,
-            xy_scaling_factor=old_label.metadata.xy_scaling_factor,
-            z_scaling_factor=old_label.metadata.z_scaling_factor,
-            time_spacing=old_label.dataset.time_spacing,
-            time_units=old_label.dataset.time_axis_unit,
-            levels=label_level_paths,
-            name=label,
-            overwrite=overwrite,
-            version=old_label.metadata.version,
-        )
-
-        # Fill in labels .attrs to contain the label name
-        list_of_labels = new_ngff_image.labels.list()
-        if label not in list_of_labels:
-            new_ngff_image.labels._label_group.attrs["labels"] = [
-                *list_of_labels,
-                label,
-            ]
-
-        if rebuild_pyramids:
-            # Set the highest resolution, then consolidate to build a new pyramid
-            new_ngff_image.labels.get_label(
-                name=label, highest_resolution=True
-            ).set_array(
-                ngff_image.labels.get_label(
-                    name=label, highest_resolution=True
-                ).on_disk_dask_array
+    # Copy labels
+    if rechunk_labels:
+        chunk_sizes["c"] = None
+        label_names = ngff_image.labels.list()
+        for label in label_names:
+            rechunk_label(
+                orig_ngff_image=ngff_image,
+                new_ngff_image=new_ngff_image,
+                label=label,
+                chunk_sizes=chunk_sizes,
+                overwrite=overwrite,
+                rebuild_pyramids=rebuild_pyramids,
             )
-            new_ngff_image.labels.get_label(
-                name=label, highest_resolution=True
-            ).consolidate()
-        else:
-            for label_path in label_level_paths:
-                new_ngff_image.labels.get_label(name=label, path=label_path).set_array(
-                    ngff_image.labels.get_label(
-                        name=label, path=label_path
-                    ).on_disk_dask_array
-                )
+
     if overwrite_input:
         os.rename(zarr_url, f"{zarr_url}_tmp")
         os.rename(rechunked_zarr_url, zarr_url)
         shutil.rmtree(f"{zarr_url}_tmp")
         return
     else:
-        image_list_updates = dict(
-            image_list_updates=[dict(zarr_url=rechunked_zarr_url, origin=zarr_url)]
+        output = dict(
+            image_list_updates=[
+                dict(
+                    zarr_url=rechunked_zarr_url,
+                    origin=zarr_url,
+                    types=dict(rechunked=True),
+                )
+            ],
+            filters=dict(types=dict(rechunked=True)),
         )
-        return image_list_updates
+        return output
 
 
 if __name__ == "__main__":

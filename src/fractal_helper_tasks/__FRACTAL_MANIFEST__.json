@@ -116,6 +116,11 @@
             "type": "string",
             "description": "If the image name between 2D & 3D don't match, this is the suffix that should be added to the 3D image. If the 2D image is in \"/path/to/my_plate_mip.zarr/B/03/0\" and the 3D image is in \"/path/to/my_plate.zarr/B/03/0_illum_corr\", the value should be \"_illum_corr\"."
           },
+          "z_chunks": {
+            "title": "Z Chunks",
+            "type": "integer",
+            "description": "Chunking for the Z dimension"
+          },
           "overwrite": {
             "default": false,
             "title": "Overwrite",

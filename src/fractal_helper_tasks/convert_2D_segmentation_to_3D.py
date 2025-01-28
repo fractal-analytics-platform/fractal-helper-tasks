@@ -175,7 +175,7 @@ def convert_2D_segmentation_to_3D(
 
     # 1a) Load a 2D label image
     label_img = da.from_zarr(f"{zarr_url}/labels/{label_name}/{level}")
-    chunks = label_img.chunksize
+    chunks = list(label_img.chunksize)
 
     # 1b) Get number z planes & Z spacing from 3D OME-Zarr file
     with zarr.open(zarr_3D_url, mode="rw+") as zarr_img:
@@ -188,6 +188,7 @@ def convert_2D_segmentation_to_3D(
         chunks[-3] = z_chunks
     else:
         chunks[-3] = z_chunk_3d
+    chunks = tuple(chunks)
 
     image_meta = load_NgffImageMeta(zarr_3D_url)
     z_pixel_size = image_meta.get_pixel_sizes_zyx(level=0)[0]

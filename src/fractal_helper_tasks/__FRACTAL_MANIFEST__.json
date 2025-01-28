@@ -49,6 +49,9 @@
       "input_types": {
         "is_3D": false
       },
+      "output_types": {
+        "is_3D": true
+      },
       "tags": [
         "Mixed modality",
         "2D to 3D workflows"

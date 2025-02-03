@@ -99,6 +99,7 @@ def convert_2D_segmentation_to_3D(
     plate_suffix: str = "_mip",
     image_suffix_2D_to_remove: Optional[str] = None,
     image_suffix_3D_to_add: Optional[str] = None,
+    z_chunks: Optional[int] = None,
     overwrite: bool = False,
 ) -> None:
     """Convert 2D segmentation to 3D segmentation.
@@ -141,6 +142,9 @@ def convert_2D_segmentation_to_3D(
             If the 2D image is in "/path/to/my_plate_mip.zarr/B/03/0" and the
             3D image is in "/path/to/my_plate.zarr/B/03/0_illum_corr", the
             value should be "_illum_corr".
+        z_chunks: Chunking for the Z dimension. Set this parameter if you want
+            the label image to be chunked differently from the 3D image in
+            the Z dimension.
         overwrite: If `True`, overwrite existing label and ROI tables in the
             3D OME-Zarr
     """
@@ -173,12 +177,20 @@ def convert_2D_segmentation_to_3D(
 
     # 1a) Load a 2D label image
     label_img = da.from_zarr(f"{zarr_url}/labels/{label_name}/{level}")
-    chunks = label_img.chunksize
+    chunks = list(label_img.chunksize)
 
     # 1b) Get number z planes & Z spacing from 3D OME-Zarr file
     with zarr.open(zarr_3D_url, mode="rw+") as zarr_img:
         zarr_3D = da.from_zarr(zarr_img[0])
         new_z_planes = zarr_3D.shape[-3]
+        z_chunk_3d = zarr_3D.chunksize[-3]
+
+    # TODO: Improve axis detection in ngio refactor?
+    if z_chunks:
+        chunks[-3] = z_chunks
+    else:
+        chunks[-3] = z_chunk_3d
+    chunks = tuple(chunks)
 
     image_meta = load_NgffImageMeta(zarr_3D_url)
     z_pixel_size = image_meta.get_pixel_sizes_zyx(level=0)[0]
@@ -249,12 +261,15 @@ def convert_2D_segmentation_to_3D(
 
     logger.info("Finished 2D to 3D conversion")
 
-    output_dict = dict(
-        filters=dict(
-            types=dict(is_3D=True),
-        )
+    # Give the 3D image as an output so that filters are applied correctly
+    image_list_updates = dict(
+        image_list_updates=[
+            dict(
+                zarr_url=zarr_3D_url,
+            )
+        ]
     )
-    return output_dict
+    return image_list_updates
 
 
 if __name__ == "__main__":

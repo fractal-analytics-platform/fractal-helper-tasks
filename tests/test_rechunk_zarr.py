@@ -119,7 +119,6 @@ def test_rechunk_no_overwrite_input(tmp_zenodo_zarr: list[str]):
                 types=dict(rechunked=True),
             )
         ],
-        filters=dict(types=dict(rechunked=True)),
     )
     assert expected_output == output
 

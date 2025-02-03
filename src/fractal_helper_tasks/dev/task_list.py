@@ -13,6 +13,7 @@ TASK_LIST = [
     ),
     ParallelTask(
         input_types=dict(is_3D=False),
+        output_types=dict(is_3D=True),
         name="Convert 2D segmentation to 3D",
         executable="convert_2D_segmentation_to_3D.py",
         meta={"cpus_per_task": 2, "mem": 8000},

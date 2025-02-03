@@ -49,6 +49,9 @@
       "input_types": {
         "is_3D": false
       },
+      "output_types": {
+        "is_3D": true
+      },
       "tags": [
         "Mixed modality",
         "2D to 3D workflows"
@@ -112,6 +115,11 @@
             "title": "Image Suffix 3D To Add",
             "type": "string",
             "description": "If the image name between 2D & 3D don't match, this is the suffix that should be added to the 3D image. If the 2D image is in \"/path/to/my_plate_mip.zarr/B/03/0\" and the 3D image is in \"/path/to/my_plate.zarr/B/03/0_illum_corr\", the value should be \"_illum_corr\"."
+          },
+          "z_chunks": {
+            "title": "Z Chunks",
+            "type": "integer",
+            "description": "Chunking for the Z dimension. Set this parameter if you want the label image to be chunked differently from the 3D image in the Z dimension."
           },
           "overwrite": {
             "default": false,

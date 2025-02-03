@@ -131,7 +131,6 @@ def rechunk_zarr(
                     types=dict(rechunked=True),
                 )
             ],
-            filters=dict(types=dict(rechunked=True)),
         )
         return output
 

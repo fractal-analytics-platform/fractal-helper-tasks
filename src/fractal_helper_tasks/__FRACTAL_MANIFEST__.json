@@ -119,7 +119,7 @@
           "z_chunks": {
             "title": "Z Chunks",
             "type": "integer",
-            "description": "Chunking for the Z dimension"
+            "description": "Chunking for the Z dimension. Set this parameter if you want the label image to be chunked differently from the 3D image in the Z dimension."
           },
           "overwrite": {
             "default": false,

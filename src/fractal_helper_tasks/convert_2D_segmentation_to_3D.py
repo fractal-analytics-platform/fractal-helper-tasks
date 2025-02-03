@@ -142,7 +142,9 @@ def convert_2D_segmentation_to_3D(
             If the 2D image is in "/path/to/my_plate_mip.zarr/B/03/0" and the
             3D image is in "/path/to/my_plate.zarr/B/03/0_illum_corr", the
             value should be "_illum_corr".
-        z_chunks: Chunking for the Z dimension
+        z_chunks: Chunking for the Z dimension. Set this parameter if you want
+            the label image to be chunked differently from the 3D image in
+            the Z dimension.
         overwrite: If `True`, overwrite existing label and ROI tables in the
             3D OME-Zarr
     """

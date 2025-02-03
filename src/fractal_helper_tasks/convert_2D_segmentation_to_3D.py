@@ -259,12 +259,27 @@ def convert_2D_segmentation_to_3D(
 
     logger.info("Finished 2D to 3D conversion")
 
-    output_dict = dict(
-        filters=dict(
-            types=dict(is_3D=True),
-        )
+    # FIXME: Remove that, but ensure that the output zarr_url is set for the
+    # 3D one? Would that work?
+    # If I don't, but the output types are set => changes the type of 2D
+    # images to 3D?
+    # If I don't set an output type, then tasks after it run on 2D images,
+    # which isn't the goal
+    # output_dict = dict(
+    #     filters=dict(
+    #         types=dict(is_3D=True),
+    #     )
+    # )
+    # return output_dict
+    # New idea, to be tested:
+    image_list_updates = dict(
+        image_list_updates=[
+            dict(
+                zarr_url=zarr_3D_url,
+            )
+        ]
     )
-    return output_dict
+    return image_list_updates
 
 
 if __name__ == "__main__":

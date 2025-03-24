@@ -53,13 +53,7 @@ jobs:
           key: pooch-cache
 
       - name: Check if manifest has changed
-        run: |
-          if [ -n "$(git diff --exit-code ./src/fractal_helper_tasks/__FRACTAL_MANIFEST__.json)" ]; then
-          echo "__FRACTAL_MANIFEST__.json has changed. Please run 'python src/fractal_helper_tasks/dev/create_manifest.py' and commit the changes."
-            exit 1
-          else
-            echo "__FRACTAL_MANIFEST__.json has not changed."
-          fi
+        run: fractal-manifest check --package fractal-helper-tasks
 
       - name: Test tasks with pytest
         run: pytest --color=yes --cov --cov-report=xml --cov-report=term-missing -s --log-cli-level debug

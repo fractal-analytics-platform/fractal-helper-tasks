@@ -10,12 +10,12 @@
         "Singleton time dimension"
       ],
       "docs_info": "### Purpose\n- Removes a **singleton time (T) dimension** from an OME-Zarr image.  \n- Creates a new OME-Zarr image with updated metadata and dimensions.\n- Optionally overwrites the input image if `overwrite_input` is set to True.\n\n### Outputs\n- A **new Zarr image** without the singleton T-dimension, stored with a configurable suffix.  \n\n### Limitations\n- Only processes OME-Zarr images where the **T-axis is the first axis**.  \n- Assumes the T-dimension is **singleton**; does not process non-singleton time axes.  \n- Does not copy associated **label images** or **ROI tables** to the new Zarr structure.  ",
-      "executable_non_parallel": "drop_t_dimension.py",
-      "meta_non_parallel": {
+      "executable_parallel": "drop_t_dimension.py",
+      "meta_parallel": {
         "cpus_per_task": 2,
         "mem": 8000
       },
-      "args_schema_non_parallel": {
+      "args_schema_parallel": {
         "additionalProperties": false,
         "properties": {
           "zarr_url": {

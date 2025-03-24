@@ -1,9 +1,9 @@
 """Fractal Task list for Fractal Helper Tasks."""
 
-from fractal_tasks_core.dev.task_models import NonParallelTask, ParallelTask
+from fractal_tasks_core.dev.task_models import ParallelTask
 
 TASK_LIST = [
-    NonParallelTask(
+    ParallelTask(
         name="Drop T Dimension",
         executable="drop_t_dimension.py",
         meta={"cpus_per_task": 2, "mem": 8000},

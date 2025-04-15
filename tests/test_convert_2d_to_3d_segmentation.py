@@ -55,23 +55,50 @@ def create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0):
     )
 
 
-# @pytest.mark.parametrize("new_label_name", [None, "nuclei_new"])
-# def test_2d_to_3d_synthetic_data(tmp_path: Path, z=2.0):
-#     """Test that the z-spacing is copied correctly."""
-#     zarr_url = str(tmp_path / "plate_mip.zarr" / "B" / "03" / "0")
-#     zarr_url_3d = str(tmp_path / "plate.zarr" / "B" / "03" / "0")
-#     label_name = "nuclei"
+@pytest.mark.parametrize("new_label_name", [None, "nuclei_new", "test"])
+def test_2d_to_3d_label_renaming(tmp_path: Path, new_label_name):
+    """Test that the z-spacing is copied correctly."""
+    zarr_url = str(tmp_path / "plate_mip.zarr" / "B" / "03" / "0")
+    zarr_url_3d = str(tmp_path / "plate.zarr" / "B" / "03" / "0")
+    label_name = "nuclei"
 
-#     create_synthetic_data(zarr_url, zarr_url_3d, label_name, z)
+    create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0)
 
-#     convert_2D_segmentation_to_3D(
-#         zarr_url=zarr_url,
-#         label_name=label_name,
-#         tables_to_copy=["masking_ROI_table"],
-#     )
+    convert_2D_segmentation_to_3D(
+        zarr_url=zarr_url,
+        label_name=label_name,
+        tables_to_copy=["masking_ROI_table"],
+        new_label_name=new_label_name,
+    )
+    ome_zarr_3d = ngio.open_ome_zarr_container(zarr_url_3d)
+    if new_label_name is None:
+        assert ome_zarr_3d.list_labels() == ["nuclei"]
+    else:
+        assert ome_zarr_3d.list_labels() == [new_label_name]
 
 
-# TODO: Parameterize this test with different z-spacing values
+@pytest.mark.parametrize("new_table_names", [None, ["new_table_names"]])
+def test_2d_to_3d_table_renaming(tmp_path: Path, new_table_names):
+    """Test that the z-spacing is copied correctly."""
+    zarr_url = str(tmp_path / "plate_mip.zarr" / "B" / "03" / "0")
+    zarr_url_3d = str(tmp_path / "plate.zarr" / "B" / "03" / "0")
+    label_name = "nuclei"
+
+    create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0)
+
+    convert_2D_segmentation_to_3D(
+        zarr_url=zarr_url,
+        label_name=label_name,
+        tables_to_copy=["masking_ROI_table"],
+        new_table_names=new_table_names,
+    )
+    ome_zarr_3d = ngio.open_ome_zarr_container(zarr_url_3d)
+    if new_table_names is None:
+        assert ome_zarr_3d.list_tables() == ["masking_ROI_table"]
+    else:
+        assert ome_zarr_3d.list_tables() == new_table_names
+
+
 @pytest.mark.parametrize("z", [0.5, 1.0, 2.0])
 def test_2d_to_3d_z_spacing(tmp_path: Path, z):
     """Test that the z-spacing is copied correctly."""
@@ -91,8 +118,6 @@ def test_2d_to_3d_z_spacing(tmp_path: Path, z):
     label_img_3d = ome_zarr_3d.get_label(name=label_name).get_array(mode="dask")
     assert label_img_3d.shape == (10, 100, 100)
     assert ome_zarr_3d.get_label(name=label_name).pixel_size.z == z
-
-    # TODO: Check that tables are copied over correctly
 
 
 def test_2d_to_3d_real_data(tmp_zenodo_zarr: list[str]):
@@ -132,7 +157,4 @@ def test_2d_to_3d_real_data(tmp_zenodo_zarr: list[str]):
 
 # TODO: Add a feature table & have it copied over
 
-# TODO: Add test with new table names
-
-# TODO: Create a version of the test data where image suffixes need to be
-# changed, run tests on those
+# TODO: Test table content more carefully

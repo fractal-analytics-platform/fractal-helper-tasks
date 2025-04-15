@@ -10,11 +10,36 @@ import shutil
 from typing import Any, Optional
 
 import ngio
+from ngio.ome_zarr_meta import AxesMapper
 from pydantic import validate_call
 
-from fractal_helper_tasks.utils import normalize_chunk_size_dict, rechunk_label
+from fractal_helper_tasks.utils import normalize_chunk_size_dict
 
 logger = logging.getLogger(__name__)
+
+
+def change_chunks(
+    initial_chunks: list[int],
+    axes_mapper: AxesMapper,
+    chunk_sizes: dict[str, Optional[int]],
+) -> list[int]:
+    """Create a new chunk_size list with rechunking.
+
+    Based on the initial chunks, the axes_mapper of the OME-Zarr & the
+    chunk_sizes dictionary with new chunk sizes, create a new chunk_size list.
+
+    """
+    for axes_name, chunk_value in chunk_sizes.items():
+        if chunk_value is not None:
+            axes_index = axes_mapper.get_index(axes_name)
+            if axes_index is None:
+                raise ValueError(
+                    f"Rechunking with {axes_name=} is specified, but the "
+                    "OME-Zarr only has the following axes: "
+                    f"{axes_mapper.on_disk_axes_names}"
+                )
+            initial_chunks[axes_index] = chunk_value
+    return initial_chunks
 
 
 @validate_call
@@ -56,66 +81,66 @@ def rechunk_zarr(
     chunk_sizes = normalize_chunk_size_dict(chunk_sizes)
 
     rechunked_zarr_url = zarr_url + f"_{suffix}"
-    ngff_image = ngio.NgffImage(zarr_url)
-    pyramid_paths = ngff_image.levels_paths
-    highest_res_img = ngff_image.get_image()
-    axes_names = highest_res_img.dataset.on_disk_axes_names
-    chunks = highest_res_img.on_disk_dask_array.chunks
-
-    # Compute the chunksize tuple
-    new_chunksize = [c[0] for c in chunks]
-    logger.info(f"Initial chunk sizes were: {chunks}")
-    # Overwrite chunk_size with user-set chunksize
-    for i, axis in enumerate(axes_names):
-        if axis in chunk_sizes:
-            if chunk_sizes[axis] is not None:
-                new_chunksize[i] = chunk_sizes[axis]
-
-    for axis in chunk_sizes:
-        if axis not in axes_names:
-            raise NotImplementedError(
-                f"Rechunking with {axis=} is specified, but the OME-Zarr only "
-                f"has the following axes: {axes_names}"
-            )
+    ome_zarr_container = ngio.open_ome_zarr_container(zarr_url)
+    pyramid_paths = ome_zarr_container.levels_paths
+    highest_res_img = ome_zarr_container.get_image()
+    chunks = highest_res_img.chunks
+    new_chunksize = change_chunks(
+        initial_chunks=list(chunks),
+        axes_mapper=highest_res_img.meta.axes_mapper,
+        chunk_sizes=chunk_sizes,
+    )
 
     logger.info(f"Chunk sizes after rechunking will be: {new_chunksize=}")
 
-    new_ngff_image = ngff_image.derive_new_image(
+    new_ome_zarr_container = ome_zarr_container.derive_image(
         store=rechunked_zarr_url,
-        name=ngff_image.image_meta.name,
+        name=ome_zarr_container.image_meta.name,
         overwrite=overwrite,
         copy_labels=not rechunk_labels,
         copy_tables=True,
         chunks=new_chunksize,
     )
 
-    ngff_image = ngio.NgffImage(zarr_url)
-
     if rebuild_pyramids:
         # Set the highest resolution, then consolidate to build a new pyramid
-        new_ngff_image.get_image(highest_resolution=True).set_array(
-            ngff_image.get_image(highest_resolution=True).on_disk_dask_array
-        )
-        new_ngff_image.get_image(highest_resolution=True).consolidate()
+        new_image = new_ome_zarr_container.get_image()
+        new_image.set_array(ome_zarr_container.get_image().get_array(mode="dask"))
+        new_image.consolidate()
     else:
         for path in pyramid_paths:
-            new_ngff_image.get_image(path=path).set_array(
-                ngff_image.get_image(path=path).on_disk_dask_array
+            new_ome_zarr_container.get_image(path=path).set_array(
+                ome_zarr_container.get_image(path=path).get_array(mode="dask")
             )
 
-    # Copy labels
+    # Rechunk labels
     if rechunk_labels:
         chunk_sizes["c"] = None
-        label_names = ngff_image.labels.list()
+        label_names = ome_zarr_container.list_labels()
         for label in label_names:
-            rechunk_label(
-                orig_ngff_image=ngff_image,
-                new_ngff_image=new_ngff_image,
-                label=label,
+            old_label = ome_zarr_container.get_label(name=label)
+            new_chunksize = change_chunks(
+                initial_chunks=list(old_label.chunks),
+                axes_mapper=old_label.meta.axes_mapper,
                 chunk_sizes=chunk_sizes,
-                overwrite=overwrite,
-                rebuild_pyramids=rebuild_pyramids,
             )
+            ngio.images.label._derive_label(
+                name=label,
+                store=f"{rechunked_zarr_url}/labels/{label}",
+                ref_image=old_label,
+                chunks=new_chunksize,
+                overwrite=overwrite,
+            )
+            if rebuild_pyramids:
+                new_label = new_ome_zarr_container.get_label(name=label)
+                new_label.set_array(old_label.get_array(mode="dask"))
+                new_label.consolidate()
+            else:
+                label_pyramid_paths = old_label.meta.paths
+                for path in label_pyramid_paths:
+                    new_ome_zarr_container.get_label(name=label, path=path).set_array(
+                        old_label.get_array(path=path, mode="dask")
+                    )
 
     if overwrite_input:
         os.rename(zarr_url, f"{zarr_url}_tmp")
@@ -123,6 +148,8 @@ def rechunk_zarr(
         shutil.rmtree(f"{zarr_url}_tmp")
         return
     else:
+        # FIXME: Update well metadata to add the new image if the image is in
+        # a well
         output = dict(
             image_list_updates=[
                 dict(

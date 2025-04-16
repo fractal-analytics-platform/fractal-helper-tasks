@@ -76,10 +76,10 @@
             "description": "Name of the label to copy from 2D OME-Zarr to 3D OME-Zarr"
           },
           "level": {
-            "default": 0,
+            "default": "0",
             "title": "Level",
             "type": "string",
-            "description": "Level of the 2D OME-Zarr label to copy from"
+            "description": "Level of the 2D OME-Zarr label to copy from. Valid choices are \"0\", \"1\", etc. (depending on which levels are available in the OME-Zarr label)."
           },
           "tables_to_copy": {
             "items": {

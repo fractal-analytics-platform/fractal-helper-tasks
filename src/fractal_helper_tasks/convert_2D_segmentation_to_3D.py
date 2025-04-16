@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def convert_2D_segmentation_to_3D(
     zarr_url: str,
     label_name: str,
-    level: str = 0,
+    level: str = "0",
     tables_to_copy: Optional[list[str]] = None,
     new_label_name: Optional[str] = None,
     new_table_names: Optional[list] = None,
@@ -186,7 +186,6 @@ def convert_2D_segmentation_to_3D(
             if table.type() == "roi_table" or table.type() == "masking_ROI_table":
                 for roi in table.rois():
                     roi.z_length = z_extent
-
             else:
                 # For some reason, I need to load the table explicitly before
                 # I can write it again

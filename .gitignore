@@ -110,3 +110,6 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+
+# Local dev files
+examples/test_rechunk_zarr.ipynb

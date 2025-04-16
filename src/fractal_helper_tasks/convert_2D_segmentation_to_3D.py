@@ -50,7 +50,9 @@ def convert_2D_segmentation_to_3D(
             the 3D OME-Zarr
         new_table_names: Optionally overwriting the names of the tables
             in the 3D OME-Zarr
-        level: Level of the 2D OME-Zarr label to copy from
+        level: Level of the 2D OME-Zarr label to copy from. Valid choices are
+            "0", "1", etc. (depending on which levels are available in the
+            OME-Zarr label).
         plate_suffix: Suffix of the 2D OME-Zarr that needs to be removed to
             generate the path to the 3D OME-Zarr. If the 2D OME-Zarr is
             "/path/to/my_plate_mip.zarr/B/03/0" and the 3D OME-Zarr is located
@@ -75,8 +77,6 @@ def convert_2D_segmentation_to_3D(
     # Normalize zarr_url
     zarr_url = zarr_url.rstrip("/")
     # 0) Preparation
-    if level != 0:
-        raise NotImplementedError("Only level 0 is supported at the moment")
     if new_table_names:
         if not tables_to_copy:
             raise ValueError(
@@ -116,7 +116,7 @@ def convert_2D_segmentation_to_3D(
 
     # 1) Load a 2D label image
     ome_zarr_container_2d = ngio.open_ome_zarr_container(zarr_url)
-    label_img = ome_zarr_container_2d.get_label(label_name, path=str(level))
+    label_img = ome_zarr_container_2d.get_label(label_name, path=level)
 
     if not label_img.is_2d:
         raise ValueError(

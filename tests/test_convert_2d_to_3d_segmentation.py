@@ -77,6 +77,26 @@ def test_2d_to_3d_label_renaming(tmp_path: Path, new_label_name):
         assert ome_zarr_3d.list_labels() == [new_label_name]
 
 
+@pytest.mark.parametrize("level", ["0", "1", "2"])
+def test_2d_to_3d_varying_levels(tmp_path: Path, level):
+    """Test that the z-spacing is copied correctly."""
+    zarr_url = str(tmp_path / "plate_mip.zarr" / "B" / "03" / "0")
+    zarr_url_3d = str(tmp_path / "plate.zarr" / "B" / "03" / "0")
+    label_name = "nuclei"
+
+    create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0)
+
+    convert_2D_segmentation_to_3D(
+        zarr_url=zarr_url,
+        level=level,
+        label_name=label_name,
+        tables_to_copy=["masking_ROI_table"],
+    )
+    ome_zarr_3d = ngio.open_ome_zarr_container(zarr_url_3d)
+    label_img = ome_zarr_3d.get_label(name="nuclei")
+    assert label_img.pixel_size.x == 0.5 * (2 ** int(level))
+
+
 @pytest.mark.parametrize("new_table_names", [None, ["new_table_names"]])
 def test_2d_to_3d_table_renaming(tmp_path: Path, new_table_names):
     """Test that the z-spacing is copied correctly."""

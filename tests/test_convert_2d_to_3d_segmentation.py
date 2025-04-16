@@ -45,10 +45,14 @@ def create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0):
     label_img.set_array(label_array)
     label_img.consolidate()
 
-    # Create a masking roi table in the 2D image
-    masking_roi_table = ome_zarr_2d.get_masked_image(label_name).build_image_roi_table(
-        name="masking_ROI_table"
+    image_roi_table = ome_zarr_2d.build_image_roi_table(name="image_ROI_table")
+    ome_zarr_2d.add_table(
+        name="image_ROI_table",
+        table=image_roi_table,
     )
+
+    # Create a masking roi table in the 2D image
+    masking_roi_table = ome_zarr_2d.build_masking_roi_table(label=label_name)
     ome_zarr_2d.add_table(
         name="masking_ROI_table",
         table=masking_roi_table,
@@ -117,6 +121,44 @@ def test_2d_to_3d_table_renaming(tmp_path: Path, new_table_names):
         assert ome_zarr_3d.list_tables() == ["masking_ROI_table"]
     else:
         assert ome_zarr_3d.list_tables() == new_table_names
+
+
+def test_2d_to_3d_table_copying(tmp_path: Path):
+    """Test that the z-spacing is copied correctly."""
+    zarr_url = str(tmp_path / "plate_mip.zarr" / "B" / "03" / "0")
+    zarr_url_3d = str(tmp_path / "plate.zarr" / "B" / "03" / "0")
+    label_name = "nuclei"
+
+    create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0)
+    ome_zarr_2d = ngio.open_ome_zarr_container(zarr_url)
+    rois = ome_zarr_2d.get_table(
+        "masking_ROI_table", check_type="masking_roi_table"
+    ).rois()
+    assert rois[0].z_length == 1.0
+
+    convert_2D_segmentation_to_3D(
+        zarr_url=zarr_url,
+        label_name=label_name,
+        tables_to_copy=["masking_ROI_table", "image_ROI_table"],
+    )
+    ome_zarr_3d = ngio.open_ome_zarr_container(zarr_url_3d)
+    # Validate correctness of tables
+    assert ome_zarr_3d.list_tables() == ["masking_ROI_table", "image_ROI_table"]
+    rois = ome_zarr_3d.get_table(
+        "masking_ROI_table", check_type="masking_roi_table"
+    ).rois()
+    assert len(rois) == 1
+    assert rois[0].name == "1"
+    assert rois[0].x_length == 10.0
+    # z_length goes from 1 to 10 because we have 10 z planes
+    assert rois[0].z_length == 10.0
+
+    rois = ome_zarr_3d.get_table("image_ROI_table", check_type="roi_table").rois()
+    assert len(rois) == 1
+    assert rois[0].name == "image_ROI_table"
+    assert rois[0].x_length == 50.0
+    # z_length goes from 1 to 10 because we have 10 z planes
+    assert rois[0].z_length == 10.0
 
 
 @pytest.mark.parametrize("z", [0.5, 1.0, 2.0])

@@ -183,7 +183,7 @@ def convert_2D_segmentation_to_3D(
                     f"Table {table_name} not found in 2D OME-Zarr {zarr_url}."
                 )
             table = ome_zarr_container_2d.get_table(table_name)
-            if table.type() == "roi_table" or table.type() == "masking_ROI_table":
+            if table.type() == "roi_table" or table.type() == "masking_roi_table":
                 for roi in table.rois():
                     roi.z_length = z_extent
             else:

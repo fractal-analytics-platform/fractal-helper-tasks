@@ -10,7 +10,6 @@
         "Singleton time dimension"
       ],
       "docs_info": "### Purpose\n- Removes a **singleton time (T) dimension** from an OME-Zarr image.  \n- Creates a new OME-Zarr image with updated metadata and dimensions.\n- Optionally overwrites the input image if `overwrite_input` is set to True.\n\n### Outputs\n- A **new Zarr image** without the singleton T-dimension, stored with a configurable suffix.  \n\n### Limitations\n- Only processes OME-Zarr images where the **T-axis is the first axis**.  \n- Assumes the T-dimension is **singleton**; does not process non-singleton time axes.  \n- Does not copy associated **label images** or **ROI tables** to the new Zarr structure.  ",
-      "type": "parallel",
       "executable_parallel": "drop_t_dimension.py",
       "meta_parallel": {
         "cpus_per_task": 2,
@@ -58,7 +57,6 @@
         "2D to 3D workflows"
       ],
       "docs_info": "### Purpose\n- Converts a **2D segmentation** image into a **3D segmentation** by replicating the 2D segmentation across Z-slices.  \n- Supports OME-Zarr datasets where **2D and 3D images** share the same base name but differ by suffixes.  \n- Optionally copies associated ROI tables and adjusts them to align with the replicated Z-dimensions.  \n\n### Outputs\n- A **3D segmentation label image** saved with a new name.  \n- Updated **ROI tables** adjusted for Z-dimensions (optional).  \n\n### Limitations\n- Only supports **same-base 2D and 3D Zarr names**; full flexibility in file names is not yet implemented.  \n- Assumes **2D OME-Zarr images** and corresponding 3D images are stored in the same base folder and just differ with a suffix before the .zarr.  \n",
-      "type": "parallel",
       "executable_parallel": "convert_2D_segmentation_to_3D.py",
       "meta_parallel": {
         "cpus_per_task": 2,
@@ -78,18 +76,18 @@
             "description": "Name of the label to copy from 2D OME-Zarr to 3D OME-Zarr"
           },
           "level": {
-            "default": 0,
+            "default": "0",
             "title": "Level",
-            "type": "integer",
-            "description": "Level of the 2D OME-Zarr label to copy from"
+            "type": "string",
+            "description": "Level of the 2D OME-Zarr label to copy from. Valid choices are \"0\", \"1\", etc. (depending on which levels are available in the OME-Zarr label)."
           },
-          "ROI_tables_to_copy": {
+          "tables_to_copy": {
             "items": {
               "type": "string"
             },
-            "title": "Roi Tables To Copy",
+            "title": "Tables To Copy",
             "type": "array",
-            "description": "List of ROI table names to copy from 2D OME-Zarr to 3D OME-Zarr"
+            "description": "List of tables to copy from 2D OME-Zarr to 3D OME-Zarr"
           },
           "new_label_name": {
             "title": "New Label Name",
@@ -100,7 +98,7 @@
             "items": {},
             "title": "New Table Names",
             "type": "array",
-            "description": "Optionally overwriting the names of the ROI tables in the 3D OME-Zarr"
+            "description": "Optionally overwriting the names of the tables in the 3D OME-Zarr"
           },
           "plate_suffix": {
             "default": "_mip",
@@ -146,7 +144,6 @@
         "Many files"
       ],
       "docs_info": "### Purpose\n- Rechunks OME-Zarr to new chunking parameters: Changes whether the array is stored as many small files or few larger files.\n- Optionally applies the same rechunking to label images.\n\n### Outputs\n- A **new Zarr image** that is rechunked.\n",
-      "type": "parallel",
       "executable_parallel": "rechunk_zarr.py",
       "meta_parallel": {
         "cpus_per_task": 1,

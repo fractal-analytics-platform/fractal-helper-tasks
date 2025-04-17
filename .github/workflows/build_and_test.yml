@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]
         exclude:
           - os: macos-latest
             python-version: '3.10'
@@ -50,7 +50,7 @@ jobs:
           key: pooch-cache
 
       - name: Check if manifest has changed
-        run: fractal-manifest check --package fractal-helper-tasks
+        run: fractal-manifest check --package fractal-helper-tasks --fractal-server-2-13
 
       - name: Test tasks with pytest
         run: pytest --color=yes --cov --cov-report=xml --cov-report=term-missing -s --log-cli-level debug

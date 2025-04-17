@@ -186,14 +186,26 @@ def convert_2D_segmentation_to_3D(
             if table.type() == "roi_table" or table.type() == "masking_roi_table":
                 for roi in table.rois():
                     roi.z_length = z_extent
-            else:
+                ome_zarr_container_3d.add_table(
+                    name=new_table_names[i],
+                    table=table,
+                    overwrite=overwrite,
+                )
+            elif table.type() == "feature_table":
                 # For some reason, I need to load the table explicitly before
                 # I can write it again
-                # FIXME: Check with Lorenzo why this is
+                # FIXME
                 table.dataframe  # noqa #B018
-            ome_zarr_container_3d.add_table(
-                name=new_table_names[i], table=table, overwrite=False
-            )
+                ome_zarr_container_3d.add_table(
+                    name=new_table_names[i],
+                    table=table,
+                    overwrite=overwrite,
+                )
+            else:
+                logger.warning(
+                    f"Table {table_name} was not copied over. Tables of type "
+                    f"{table.type()} are not supported by this task so far."
+                )
 
     logger.info("Finished 2D to 3D conversion")
 

@@ -11,7 +11,7 @@ Collection of Fractal helper tasks
 
 To create the manifest:
 ```
-fractal-manifest create --package fractal_helper_tasks --fractal-server-2-13
+fractal-manifest create --package fractal_helper_tasks
 ```
 
 Refer to the developers-guide in the [Fractal template repo](https://github.com/fractal-analytics-platform/fractal-tasks-template/blob/main/DEVELOPERS_GUIDE.md) for more detailed instructions.

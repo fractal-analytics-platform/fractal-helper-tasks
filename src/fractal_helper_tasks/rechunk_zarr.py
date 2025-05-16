@@ -126,25 +126,21 @@ def rechunk_zarr(
                 axes_mapper=old_label.meta.axes_mapper,
                 chunk_sizes=chunk_sizes,
             )
-            ngio.images.label.derive_label(
+            new_label = new_ome_zarr_container.derive_label(
                 name=label,
-                store=f"{rechunked_zarr_url}/labels/{label}",
                 ref_image=old_label,
                 chunks=new_chunksize,
                 overwrite=overwrite,
             )
-            new_ome_zarr_container = ngio.open_ome_zarr_container(rechunked_zarr_url)
-            print(new_ome_zarr_container.list_labels())
-            print(rechunked_zarr_url)
             if rebuild_pyramids:
-                new_label = new_ome_zarr_container.get_label(name=label)
                 new_label.set_array(old_label.get_array(mode="dask"))
                 new_label.consolidate()
             else:
                 label_pyramid_paths = old_label.meta.paths
                 for path in label_pyramid_paths:
-                    new_ome_zarr_container.get_label(name=label, path=path).set_array(
-                        old_label.get_array(path=path, mode="dask")
+                    old_label = ome_zarr_container.get_label(name=label, path=path)
+                    new_label.set_array(
+                        old_label.get_array(mode="dask")
                     )
 
     if overwrite_input:

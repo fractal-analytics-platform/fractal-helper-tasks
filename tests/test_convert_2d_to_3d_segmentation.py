@@ -4,7 +4,10 @@ from pathlib import Path
 
 import ngio
 import numpy as np
+import pandas as pd
 import pytest
+from ngio.images.label import build_masking_roi_table
+from ngio.tables import GenericTable
 
 from fractal_helper_tasks.convert_2D_segmentation_to_3D import (
     convert_2D_segmentation_to_3D,
@@ -190,9 +193,7 @@ def test_2d_to_3d_real_data(tmp_zenodo_zarr: list[str]):
 
     # Create a masking roi table in the 2D image
     ome_zarr_2d = ngio.open_ome_zarr_container(zarr_url)
-    masking_roi_table = ome_zarr_2d.get_masked_image("nuclei").build_image_roi_table(
-        name=tables_to_copy[0]
-    )
+    masking_roi_table = build_masking_roi_table(ome_zarr_2d.get_label(name=label_name))
 
     ome_zarr_2d.add_table(
         name=tables_to_copy[0],
@@ -210,13 +211,44 @@ def test_2d_to_3d_real_data(tmp_zenodo_zarr: list[str]):
     ome_zarr_3d = ngio.open_ome_zarr_container(zarr_3D_label_url)
     label_img_3d = ome_zarr_3d.get_label(name=label_name).get_array(mode="dask")
     assert label_img_3d.shape == (2, 540, 1280)
+    assert (
+        ome_zarr_3d.list_tables()
+        == ["FOV_ROI_table", "well_ROI_table"] + tables_to_copy  # noqa RUF005
+    )
 
-    # for table_name in roi_table_names:
-    #     roi_table = ome_zarr_3d.get_roi_table(name=table_name)
-    #     assert roi_table is not None
-    #     assert isinstance(roi_table, zarr.core.Array)
 
+def test_2d_to_3d_real_data_no_label_copy(tmp_zenodo_zarr: list[str]):
+    print(tmp_zenodo_zarr)
+    zarr_url = f"{tmp_zenodo_zarr[1]}/B/03/0"
+    tables_to_copy = ["generic_table", "nuclei"]
 
-# TODO: Add a feature table & have it copied over
+    # Create a masking roi table in the 2D image
+    ome_zarr_2d = ngio.open_ome_zarr_container(zarr_url)
+
+    # Add a generic table to be copied over
+    generic_table = GenericTable(
+        dataframe=pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
+    )
+
+    ome_zarr_2d.add_table(
+        name=tables_to_copy[0],
+        table=generic_table,
+    )
+
+    convert_2D_segmentation_to_3D(
+        zarr_url=zarr_url,
+        label_name=None,
+        tables_to_copy=tables_to_copy,
+    )
+
+    zarr_3D_label_url = f"{tmp_zenodo_zarr[0]}/B/03/0"
+    # Check that the label has been copied correctly
+    ome_zarr_3d = ngio.open_ome_zarr_container(zarr_3D_label_url)
+    assert len(ome_zarr_3d.list_labels()) == 0
+    assert (
+        ome_zarr_3d.list_tables()
+        == ["FOV_ROI_table", "well_ROI_table"] + tables_to_copy  # noqa RUF005
+    )
+
 
 # TODO: Test table content more carefully

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 @validate_call
 def convert_2D_segmentation_to_3D(
     zarr_url: str,
-    label_name: str,
+    label_name: Optional[str] = None,
     level: str = "0",
     tables_to_copy: Optional[list[str]] = None,
     new_label_name: Optional[str] = None,
@@ -96,10 +96,7 @@ def convert_2D_segmentation_to_3D(
     if image_suffix_3D_to_add:
         zarr_3D_url += image_suffix_3D_to_add
 
-    if new_label_name is None:
-        new_label_name = label_name
-    if new_table_names is None:
-        new_table_names = tables_to_copy
+    ome_zarr_container_2d = ngio.open_ome_zarr_container(zarr_url)
 
     try:
         ome_zarr_container_3d = ngio.open_ome_zarr_container(zarr_3D_url)
@@ -109,71 +106,82 @@ def convert_2D_segmentation_to_3D(
             f"suffix (set to {plate_suffix})."
         ) from e
 
-    logger.info(
-        f"Copying {label_name} from {zarr_url} to {zarr_3D_url} as "
-        f"{new_label_name}."
-    )
+    if new_label_name is None:
+        new_label_name = label_name
+    if new_table_names is None:
+        new_table_names = tables_to_copy
 
-    # 1) Load a 2D label image
-    ome_zarr_container_2d = ngio.open_ome_zarr_container(zarr_url)
-    label_img = ome_zarr_container_2d.get_label(label_name, path=level)
-
-    if not label_img.is_2d:
-        raise ValueError(
-            f"Label image {label_name} is not 2D. It has a shape of "
-            f"{label_img.shape} and the axes "
-            f"{label_img.axes_mapper.on_disk_axes_names}."
+    if label_name:
+        logger.info(
+            f"Copying {label_name} from {zarr_url} to {zarr_3D_url} as "
+            f"{new_label_name}."
         )
 
-    chunks = list(label_img.chunks)
-    label_dask = label_img.get_array(mode="dask")
+        # 1) Load a 2D label image
+        label_img = ome_zarr_container_2d.get_label(label_name, path=level)
 
-    # 2) Set up the 3D label image
-    ref_image_3d = ome_zarr_container_3d.get_image(
-        pixel_size=label_img.pixel_size,
-    )
+        if not label_img.is_2d:
+            raise ValueError(
+                f"Label image {label_name} is not 2D. It has a shape of "
+                f"{label_img.shape} and the axes "
+                f"{label_img.axes_mapper.on_disk_axes_names}."
+            )
 
-    z_index = label_img.axes_mapper.get_index("z")
-    y_index = label_img.axes_mapper.get_index("y")
-    x_index = label_img.axes_mapper.get_index("x")
-    z_index_3d_reference = ref_image_3d.axes_mapper.get_index("z")
-    if z_chunks:
-        chunks[z_index] = z_chunks
+        chunks = list(label_img.chunks)
+        label_dask = label_img.get_array(mode="dask")
+
+        # 2) Set up the 3D label image
+        ref_image_3d = ome_zarr_container_3d.get_image(
+            pixel_size=label_img.pixel_size,
+        )
+
+        z_index = label_img.axes_mapper.get_index("z")
+        y_index = label_img.axes_mapper.get_index("y")
+        x_index = label_img.axes_mapper.get_index("x")
+        z_index_3d_reference = ref_image_3d.axes_mapper.get_index("z")
+        if z_chunks:
+            chunks[z_index] = z_chunks
+        else:
+            chunks[z_index] = ref_image_3d.chunks[z_index_3d_reference]
+        chunks = tuple(chunks)
+
+        nb_z_planes = ref_image_3d.shape[z_index_3d_reference]
+
+        shape_3d = (nb_z_planes, label_img.shape[y_index], label_img.shape[x_index])
+
+        pixel_size = label_img.pixel_size
+        pixel_size.z = ref_image_3d.pixel_size.z
+        axes_names = label_img.axes_mapper.on_disk_axes_names
+
+        z_extent = nb_z_planes * pixel_size.z
+
+        new_label_container = ome_zarr_container_3d.derive_label(
+            name=new_label_name,
+            ref_image=ref_image_3d,
+            shape=shape_3d,
+            pixel_size=pixel_size,
+            axes_names=axes_names,
+            chunks=chunks,
+            dtype=label_img.dtype,
+            overwrite=overwrite,
+        )
+
+        # 3) Create the 3D stack of the label image
+        label_img_3D = da.stack([label_dask.squeeze()] * nb_z_planes)
+
+        # 4) Save changed label image to OME-Zarr
+        new_label_container.set_array(label_img_3D, axes_order="zyx")
+
+        logger.info(f"Saved {new_label_name} to 3D Zarr at full resolution")
+        # 5) Build pyramids for label image
+        new_label_container.consolidate()
+        logger.info(f"Built a pyramid for the {new_label_name} label image")
+
     else:
-        chunks[z_index] = ref_image_3d.chunks[z_index_3d_reference]
-    chunks = tuple(chunks)
-
-    nb_z_planes = ref_image_3d.shape[z_index_3d_reference]
-
-    shape_3d = (nb_z_planes, label_img.shape[y_index], label_img.shape[x_index])
-
-    pixel_size = label_img.pixel_size
-    pixel_size.z = ref_image_3d.pixel_size.z
-    axes_names = label_img.axes_mapper.on_disk_axes_names
-
-    z_extent = nb_z_planes * pixel_size.z
-
-    new_label_container = ome_zarr_container_3d.derive_label(
-        name=new_label_name,
-        ref_image=ref_image_3d,
-        shape=shape_3d,
-        pixel_size=pixel_size,
-        axes_names=axes_names,
-        chunks=chunks,
-        dtype=label_img.dtype,
-        overwrite=overwrite,
-    )
-
-    # 3) Create the 3D stack of the label image
-    label_img_3D = da.stack([label_dask.squeeze()] * nb_z_planes)
-
-    # 4) Save changed label image to OME-Zarr
-    new_label_container.set_array(label_img_3D, axes_order="zyx")
-
-    logger.info(f"Saved {new_label_name} to 3D Zarr at full resolution")
-    # 5) Build pyramids for label image
-    new_label_container.consolidate()
-    logger.info(f"Built a pyramid for the {new_label_name} label image")
+        logger.info(
+            "No label_name provided, skipping label image conversion. "
+            "Only tables will be copied."
+        )
 
     # 6) Copy tables
     if tables_to_copy:
@@ -183,6 +191,7 @@ def convert_2D_segmentation_to_3D(
                     f"Table {table_name} not found in 2D OME-Zarr {zarr_url}."
                 )
             table = ome_zarr_container_2d.get_table(table_name)
+            print(table.type())
             if table.type() == "roi_table" or table.type() == "masking_roi_table":
                 for roi in table.rois():
                     roi.z_length = z_extent
@@ -191,20 +200,14 @@ def convert_2D_segmentation_to_3D(
                     table=table,
                     overwrite=overwrite,
                 )
-            elif table.type() == "feature_table":
-                # For some reason, I need to load the table explicitly before
-                # I can write it again
-                # FIXME
+            else:
+                # Added to avoid an KeyError: 'obs' that occurs for some
+                # AnnData tables otherwise
                 table.dataframe  # noqa #B018
                 ome_zarr_container_3d.add_table(
                     name=new_table_names[i],
                     table=table,
                     overwrite=overwrite,
-                )
-            else:
-                logger.warning(
-                    f"Table {table_name} was not copied over. Tables of type "
-                    f"{table.type()} are not supported by this task so far."
                 )
 
     logger.info("Finished 2D to 3D conversion")

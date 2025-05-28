@@ -131,8 +131,7 @@
           }
         },
         "required": [
-          "zarr_url",
-          "label_name"
+          "zarr_url"
         ],
         "type": "object",
         "title": "Convert2dSegmentationTo3d"

@@ -9,4 +9,4 @@
 ### Limitations
 - Only processes OME-Zarr images where the **T-axis is the first axis**.  
 - Assumes the T-dimension is **singleton**; does not process non-singleton time axes.  
-- Does not copy associated **label images** or **ROI tables** to the new Zarr structure.  
+- Does not copy associated **label images** to the new Zarr structure.  

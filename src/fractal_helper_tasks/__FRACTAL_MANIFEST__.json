@@ -9,7 +9,7 @@
       "tags": [
         "Singleton time dimension"
       ],
-      "docs_info": "### Purpose\n- Removes a **singleton time (T) dimension** from an OME-Zarr image.  \n- Creates a new OME-Zarr image with updated metadata and dimensions.\n- Optionally overwrites the input image if `overwrite_input` is set to True.\n\n### Outputs\n- A **new Zarr image** without the singleton T-dimension, stored with a configurable suffix.  \n\n### Limitations\n- Only processes OME-Zarr images where the **T-axis is the first axis**.  \n- Assumes the T-dimension is **singleton**; does not process non-singleton time axes.  \n- Does not copy associated **label images** or **ROI tables** to the new Zarr structure.  ",
+      "docs_info": "### Purpose\n- Removes a **singleton time (T) dimension** from an OME-Zarr image.  \n- Creates a new OME-Zarr image with updated metadata and dimensions.\n- Optionally overwrites the input image if `overwrite_input` is set to True.\n\n### Outputs\n- A **new Zarr image** without the singleton T-dimension, stored with a configurable suffix.  \n\n### Limitations\n- Only processes OME-Zarr images where the **T-axis is the first axis**.  \n- Assumes the T-dimension is **singleton**; does not process non-singleton time axes.  \n- Does not copy associated **label images** to the new Zarr structure.  ",
       "type": "parallel",
       "executable_parallel": "drop_t_dimension.py",
       "meta_parallel": {
@@ -203,6 +203,50 @@
         ],
         "type": "object",
         "title": "RechunkZarr"
+      },
+      "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
+    },
+    {
+      "name": "Add Z Singleton Dimension",
+      "input_types": {
+        "is_3D": false
+      },
+      "tags": [
+        "Singleton Z dimension"
+      ],
+      "docs_info": "### Purpose\n- Removes a **singleton time (T) dimension** from an OME-Zarr image.  \n- Creates a new OME-Zarr image with updated metadata and dimensions.\n- Optionally overwrites the input image if `overwrite_input` is set to True.\n\n### Outputs\n- A **new Zarr image** without the singleton T-dimension, stored with a configurable suffix.  \n\n### Limitations\n- Only processes OME-Zarr images where the **T-axis is the first axis**.  \n- Assumes the T-dimension is **singleton**; does not process non-singleton time axes.  \n- Does not copy associated **label images** to the new Zarr structure.  ",
+      "type": "parallel",
+      "executable_parallel": "add_z_singleton.py",
+      "meta_parallel": {
+        "cpus_per_task": 1,
+        "mem": 4000
+      },
+      "args_schema_parallel": {
+        "additionalProperties": false,
+        "properties": {
+          "zarr_url": {
+            "title": "Zarr Url",
+            "type": "string",
+            "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
+          },
+          "suffix": {
+            "default": "z_singleton",
+            "title": "Suffix",
+            "type": "string",
+            "description": "Suffix to be used for the new Zarr image. If overwrite_input is True, this file is only temporary."
+          },
+          "overwrite_input": {
+            "default": true,
+            "title": "Overwrite Input",
+            "type": "boolean",
+            "description": "Whether the existing iamge should be overwritten with the new OME-Zarr with the Z singleton dimension."
+          }
+        },
+        "required": [
+          "zarr_url"
+        ],
+        "type": "object",
+        "title": "AddZSingleton"
       },
       "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
     }

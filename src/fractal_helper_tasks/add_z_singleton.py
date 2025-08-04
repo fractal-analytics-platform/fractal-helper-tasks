@@ -20,13 +20,13 @@ logger = logging.getLogger(__name__)
 
 
 @validate_call
-def drop_t_dimension(
+def add_z_singleton(
     *,
     zarr_url: str,
-    suffix: str = "no_T",
-    overwrite_input: bool = False,
+    suffix: str = "z_singleton",
+    overwrite_input: bool = True,
 ) -> dict[str, Any]:
-    """Drops singleton t dimension.
+    """Add a singleton Z dimension to a 2D OME-Zarr.
 
     Args:
         zarr_url: Path or url to the individual OME-Zarr image to be processed.
@@ -34,7 +34,7 @@ def drop_t_dimension(
         suffix: Suffix to be used for the new Zarr image. If overwrite_input
             is True, this file is only temporary.
         overwrite_input: Whether the existing iamge should be overwritten with
-            the new OME-Zarr without the T dimension.
+            the new OME-Zarr with the Z singleton dimension.
     """
     # Normalize zarr_url
     zarr_url_old = zarr_url.rstrip("/")
@@ -45,33 +45,45 @@ def drop_t_dimension(
 
     old_ome_zarr = ngio.open_ome_zarr_container(zarr_url_old)
     old_ome_zarr_img = old_ome_zarr.get_image()
-    if not old_ome_zarr_img.has_axis("t"):
+    if old_ome_zarr_img.has_axis("z"):
         raise ValueError(
-            f"The Zarr image {zarr_url_old} does not contain a T axis. "
-            "Thus, the drop T dimension task can't be applied to it."
+            f"The Zarr image {zarr_url_old} already contains a Z axis. "
+            "Thus, the add Z singleton dimension task can't be applied to it."
         )
-    # TODO: Check if T dimension not singleton
     image = old_ome_zarr_img.get_array(mode="dask")
-    t_index = old_ome_zarr_img.meta.axes_mapper.get_index("t")
-    new_img = da.squeeze(image, axis=t_index)
-    pixel_size = old_ome_zarr_img.pixel_size
-    new_pixel_size = ngio.PixelSize(x=pixel_size.x, y=pixel_size.y, z=pixel_size.z)
     axes_names = old_ome_zarr_img.meta.axes_mapper.on_disk_axes_names
-    del axes_names[t_index]
+    ndim = image.ndim
+    insert_index = ndim - 2
+    if insert_index < 0:
+        raise ValueError(
+            f"Cannot insert a Z axis at position {insert_index} in an array"
+            f" with {ndim} dimensions."
+        )
+    # Insert singleton Z dimension
+    image_with_z = da.expand_dims(image, axis=insert_index)
+    logger.info(f"Original shape: {image.shape}, new shape: {image_with_z.shape}")
+    axes_names_with_z = axes_names[:insert_index] + ["z"] + axes_names[insert_index:]
+
+    pixel_size = old_ome_zarr_img.pixel_size
+    new_pixel_size = ngio.PixelSize(x=pixel_size.x, y=pixel_size.y, z=1.0)
+
     chunk_sizes = old_ome_zarr_img.chunks
-    new_chunk_sizes = chunk_sizes[:t_index] + chunk_sizes[t_index + 1 :]
+    new_chunk_sizes = chunk_sizes[:insert_index] + (1,) + chunk_sizes[insert_index:]
+
     new_ome_zarr_container = old_ome_zarr.derive_image(
         store=zarr_url_new,
-        shape=new_img.shape,
+        shape=image_with_z.shape,
         chunks=new_chunk_sizes,
         dtype=old_ome_zarr_img.dtype,
         pixel_size=new_pixel_size,
-        axes_names=axes_names,
+        axes_names=axes_names_with_z,
         copy_tables=True,
     )
     new_image_container = new_ome_zarr_container.get_image()
-    new_image_container.set_array(new_img)
+    new_image_container.set_array(image_with_z)
     new_image_container.consolidate()
+
+    # TODO: Also handle copying over & adding Z dimension to label images?
 
     if overwrite_input:
         image_list_update = dict(zarr_url=zarr_url_old, types=dict(has_t=False))
@@ -90,6 +102,6 @@ if __name__ == "__main__":
     from fractal_task_tools.task_wrapper import run_fractal_task
 
     run_fractal_task(
-        task_function=drop_t_dimension,
+        task_function=add_z_singleton,
         logger_name=logger.name,
     )

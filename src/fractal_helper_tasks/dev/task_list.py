@@ -35,4 +35,12 @@ TASK_LIST = [
         ],
         docs_info="file:docs_info/rechunk_zarr.md",
     ),
+    ParallelTask(
+        name="Add Z Singleton Dimension",
+        executable="add_z_singleton.py",
+        meta={"cpus_per_task": 1, "mem": 4000},
+        input_types=dict(is_3D=False),
+        tags=["Singleton Z dimension"],
+        docs_info="file:docs_info/drop_t_dimension.md",
+    ),
 ]

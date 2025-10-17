@@ -30,9 +30,10 @@ def test_drop_t_dimension(
     )
     new_zarr_url = f"{zarr_url}_no_T"
     new_ome_zarr_container = ngio.open_ome_zarr_container(new_zarr_url)
-    assert new_ome_zarr_container.image_meta.axes_mapper.on_disk_axes_names == [
+
+    assert new_ome_zarr_container.image_meta.axes_handler.axes_names == (
         "c",
         "z",
         "y",
         "x",
-    ]
+    )

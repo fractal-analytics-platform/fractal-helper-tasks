@@ -52,11 +52,11 @@ def drop_t_dimension(
         )
     # TODO: Check if T dimension not singleton
     image = old_ome_zarr_img.get_array(mode="dask")
-    t_index = old_ome_zarr_img.meta.axes_mapper.get_index("t")
+    t_index = old_ome_zarr_img.axes_handler.get_index("t")
     new_img = da.squeeze(image, axis=t_index)
     pixel_size = old_ome_zarr_img.pixel_size
     new_pixel_size = ngio.PixelSize(x=pixel_size.x, y=pixel_size.y, z=pixel_size.z)
-    axes_names = old_ome_zarr_img.meta.axes_mapper.on_disk_axes_names
+    axes_names = list(old_ome_zarr_img.axes)
     del axes_names[t_index]
     chunk_sizes = old_ome_zarr_img.chunks
     new_chunk_sizes = chunk_sizes[:t_index] + chunk_sizes[t_index + 1 :]

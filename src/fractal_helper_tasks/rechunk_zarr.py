@@ -10,9 +10,6 @@ import shutil
 from typing import Any, Optional
 
 import ngio
-import ngio.images
-import ngio.images.label
-from ngio.ome_zarr_meta import AxesMapper
 from pydantic import validate_call
 
 from fractal_helper_tasks.utils import normalize_chunk_size_dict
@@ -22,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def change_chunks(
     initial_chunks: list[int],
-    axes_mapper: AxesMapper,
+    multiscale: ngio.Image | ngio.Label,
     chunk_sizes: dict[str, Optional[int]],
 ) -> list[int]:
     """Create a new chunk_size list with rechunking.
@@ -33,12 +30,12 @@ def change_chunks(
     """
     for axes_name, chunk_value in chunk_sizes.items():
         if chunk_value is not None:
-            axes_index = axes_mapper.get_index(axes_name)
+            axes_index = multiscale.axes_handler.get_index(axes_name)
             if axes_index is None:
                 raise ValueError(
                     f"Rechunking with {axes_name=} is specified, but the "
                     "OME-Zarr only has the following axes: "
-                    f"{axes_mapper.on_disk_axes_names}"
+                    f"{multiscale.axes}"
                 )
             initial_chunks[axes_index] = chunk_value
     return initial_chunks
@@ -89,7 +86,7 @@ def rechunk_zarr(
     chunks = highest_res_img.chunks
     new_chunksize = change_chunks(
         initial_chunks=list(chunks),
-        axes_mapper=highest_res_img.meta.axes_mapper,
+        multiscale=highest_res_img,
         chunk_sizes=chunk_sizes,
     )
 
@@ -123,7 +120,7 @@ def rechunk_zarr(
             old_label = ome_zarr_container.get_label(name=label)
             new_chunksize = change_chunks(
                 initial_chunks=list(old_label.chunks),
-                axes_mapper=old_label.meta.axes_mapper,
+                multiscale=old_label,
                 chunk_sizes=chunk_sizes,
             )
             new_label = new_ome_zarr_container.derive_label(
@@ -139,9 +136,7 @@ def rechunk_zarr(
                 label_pyramid_paths = old_label.meta.paths
                 for path in label_pyramid_paths:
                     old_label = ome_zarr_container.get_label(name=label, path=path)
-                    new_label.set_array(
-                        old_label.get_array(mode="dask")
-                    )
+                    new_label.set_array(old_label.get_array(mode="dask"))
 
     if overwrite_input:
         os.rename(zarr_url, f"{zarr_url}_tmp")

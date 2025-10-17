@@ -124,7 +124,7 @@ def convert_2D_segmentation_to_3D(
             raise ValueError(
                 f"Label image {label_name} is not 2D. It has a shape of "
                 f"{label_img.shape} and the axes "
-                f"{label_img.axes_mapper.on_disk_axes_names}."
+                f"{label_img.axes}."
             )
 
         chunks = list(label_img.chunks)
@@ -135,10 +135,10 @@ def convert_2D_segmentation_to_3D(
             pixel_size=label_img.pixel_size,
         )
 
-        z_index = label_img.axes_mapper.get_index("z")
-        y_index = label_img.axes_mapper.get_index("y")
-        x_index = label_img.axes_mapper.get_index("x")
-        z_index_3d_reference = ref_image_3d.axes_mapper.get_index("z")
+        z_index = label_img.axes_handler.get_index("z")
+        y_index = label_img.axes_handler.get_index("y")
+        x_index = label_img.axes_handler.get_index("x")
+        z_index_3d_reference = ref_image_3d.axes_handler.get_index("z")
         if z_chunks:
             chunks[z_index] = z_chunks
         else:
@@ -151,7 +151,7 @@ def convert_2D_segmentation_to_3D(
 
         pixel_size = label_img.pixel_size
         pixel_size.z = ref_image_3d.pixel_size.z
-        axes_names = label_img.axes_mapper.on_disk_axes_names
+        axes_names = label_img.meta.axes_handler.axes_names
 
         z_extent = nb_z_planes * pixel_size.z
 
@@ -191,8 +191,10 @@ def convert_2D_segmentation_to_3D(
                     f"Table {table_name} not found in 2D OME-Zarr {zarr_url}."
                 )
             table = ome_zarr_container_2d.get_table(table_name)
-            print(table.type())
-            if table.type() == "roi_table" or table.type() == "masking_roi_table":
+            if (
+                table.table_type() == "roi_table"
+                or table.table_type() == "masking_roi_table"
+            ):
                 for roi in table.rois():
                     roi.z_length = z_extent
                 ome_zarr_container_3d.add_table(

@@ -51,7 +51,7 @@ def add_z_singleton(
             "Thus, the add Z singleton dimension task can't be applied to it."
         )
     image = old_ome_zarr_img.get_array(mode="dask")
-    axes_names = old_ome_zarr_img.meta.axes_mapper.on_disk_axes_names
+    axes_names = list(old_ome_zarr_img.meta.axes_handler.axes_names)
     ndim = image.ndim
     insert_index = ndim - 2
     if insert_index < 0:

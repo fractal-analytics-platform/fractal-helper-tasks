@@ -27,14 +27,15 @@ authors = [
 # Required Python version and dependencies
 requires-python = ">=3.11"
 dependencies = [
-    "ngio>=0.2.8, <0.3.0",
+    "ngio>=0.4.1, <0.5.0",
     "fractal-task-tools==0.0.12",
+    "pyarrow<21.0.0",
 ]
 
 # Optional dependencies (e.g. for `pip install -e ".[dev]"`, see
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies)
 [project.optional-dependencies]
-dev = ["devtools", "hatch", "pytest", "requests", "jsonschema", "ruff", "pre-commit", "pooch"]
+dev = ["devtools", "hatch", "pytest", "requests", "jsonschema", "ruff", "pre-commit", "pooch", "pillow"]
 test = ["pytest", "pytest-cov"]
 
 # https://docs.astral.sh/ruff

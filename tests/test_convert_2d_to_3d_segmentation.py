@@ -6,7 +6,6 @@ import ngio
 import numpy as np
 import pandas as pd
 import pytest
-from ngio.images.label import build_masking_roi_table
 from ngio.tables import GenericTable
 
 from fractal_helper_tasks.convert_2D_segmentation_to_3D import (
@@ -134,10 +133,9 @@ def test_2d_to_3d_table_copying(tmp_path: Path):
 
     create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0)
     ome_zarr_2d = ngio.open_ome_zarr_container(zarr_url)
-    rois = ome_zarr_2d.get_table(
-        "masking_ROI_table", check_type="masking_roi_table"
-    ).rois()
-    assert rois[0].z_length == 1.0
+    roi_table = ome_zarr_2d.get_table("masking_ROI_table")
+    assert roi_table.table_type() == "masking_roi_table"
+    assert roi_table.rois()[0].z_length == 1.0
 
     convert_2D_segmentation_to_3D(
         zarr_url=zarr_url,
@@ -147,16 +145,18 @@ def test_2d_to_3d_table_copying(tmp_path: Path):
     ome_zarr_3d = ngio.open_ome_zarr_container(zarr_url_3d)
     # Validate correctness of tables
     assert ome_zarr_3d.list_tables() == ["masking_ROI_table", "image_ROI_table"]
-    rois = ome_zarr_3d.get_table(
-        "masking_ROI_table", check_type="masking_roi_table"
-    ).rois()
+    roi_table = ome_zarr_3d.get_table("masking_ROI_table")
+    assert roi_table.table_type() == "masking_roi_table"
+    rois = roi_table.rois()
     assert len(rois) == 1
     assert rois[0].name == "1"
     assert rois[0].x_length == 10.0
     # z_length goes from 1 to 10 because we have 10 z planes
     assert rois[0].z_length == 10.0
 
-    rois = ome_zarr_3d.get_table("image_ROI_table", check_type="roi_table").rois()
+    roi_table = ome_zarr_3d.get_table("image_ROI_table")
+    assert roi_table.table_type() == "roi_table"
+    rois = roi_table.rois()
     assert len(rois) == 1
     assert rois[0].name == "image_ROI_table"
     assert rois[0].x_length == 50.0
@@ -193,7 +193,7 @@ def test_2d_to_3d_real_data(tmp_zenodo_zarr: list[str]):
 
     # Create a masking roi table in the 2D image
     ome_zarr_2d = ngio.open_ome_zarr_container(zarr_url)
-    masking_roi_table = build_masking_roi_table(ome_zarr_2d.get_label(name=label_name))
+    masking_roi_table = ome_zarr_2d.build_masking_roi_table(label_name)
 
     ome_zarr_2d.add_table(
         name=tables_to_copy[0],
@@ -227,7 +227,7 @@ def test_2d_to_3d_real_data_no_label_copy(tmp_zenodo_zarr: list[str]):
 
     # Add a generic table to be copied over
     generic_table = GenericTable(
-        dataframe=pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
+        table_data=pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
     )
 
     ome_zarr_2d.add_table(

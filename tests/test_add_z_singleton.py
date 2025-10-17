@@ -60,7 +60,7 @@ def test_add_singleton(
 
     new_ome_zarr_container = ngio.open_ome_zarr_container(new_zarr_url)
     assert (
-        new_ome_zarr_container.image_meta.axes_mapper.on_disk_axes_names
+        list(new_ome_zarr_container.image_meta.axes_handler.axes_names)
         == target_axes_names
     )
     assert new_ome_zarr_container.get_image().pixel_size.z == 1.0

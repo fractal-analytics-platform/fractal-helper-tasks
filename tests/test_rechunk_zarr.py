@@ -8,17 +8,16 @@ from fractal_helper_tasks.rechunk_zarr import (
 )
 
 
-# FIXME: Reactive these tests with ngio 0.2.3
 @pytest.mark.parametrize(
     "chunk_sizes, output_chunk_sizes",
     [
         ({"x": 1000, "y": 1000}, (1, 1, 1000, 1000)),
         ({"X": 1000, "Y": 1000}, (1, 1, 1000, 1000)),
-        # ({"x": 6000, "y": 6000}, (1, 1, 2160, 5120)),
+        ({"x": 6000, "y": 6000}, (1, 1, 2160, 5120)),
         ({}, (1, 1, 2160, 2560)),
         ({"x": None, "y": None}, (1, 1, 2160, 2560)),
-        # ({"z": 10}, (1, 1, 2160, 2560)),
-        # ({"Z": 10}, (1, 1, 2160, 2560)),
+        ({"z": 10}, (1, 1, 2160, 2560)),
+        ({"Z": 10}, (1, 1, 2160, 2560)),
     ],
 )
 def test_rechunk_2d(tmp_zenodo_zarr: list[str], chunk_sizes, output_chunk_sizes):
@@ -33,12 +32,11 @@ def test_rechunk_2d(tmp_zenodo_zarr: list[str], chunk_sizes, output_chunk_sizes)
     assert chunk_sizes == output_chunk_sizes
 
 
-# FIXME: Reactive these tests with ngio 0.2.3
 @pytest.mark.parametrize(
     "chunk_sizes, output_chunk_sizes",
     [
         ({"x": None, "y": None}, (1, 1, 2160, 2560)),
-        # ({"z": 10}, (1, 2, 2160, 2560)),
+        ({"z": 10}, (1, 2, 2160, 2560)),
     ],
 )
 def test_rechunk_3d(tmp_zenodo_zarr: list[str], chunk_sizes, output_chunk_sizes):

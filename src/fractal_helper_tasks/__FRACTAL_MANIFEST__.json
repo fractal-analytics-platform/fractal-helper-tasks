@@ -249,6 +249,64 @@
         "title": "AddZSingleton"
       },
       "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
+    },
+    {
+      "name": "Assign Label by Overlap",
+      "tags": [
+        "Label assignment",
+        "Label processing"
+      ],
+      "docs_info": "### Purpose\n- Assigns labels of child label to the parent label based on overlap.\n- Uses a threshold and fills NA for labels with no sufficient overlap.\n- When multiple parent labels overlap with a child label, assigns the parent label with the maximum overlap.\n\n### Outputs\n- A new FeatureTable or an addition to an existing FeatureTable with the overlap measurements & assignments.\n\n### Limitations\n- Only processes OME-Zarrs where both parent and child label are in the same OME-Zarr image (in some multiplexing scenarios, those labels are in different images).",
+      "type": "parallel",
+      "executable_parallel": "label_assignment_by_overlap.py",
+      "meta_parallel": {
+        "cpus_per_task": 1,
+        "mem": 4000
+      },
+      "args_schema_parallel": {
+        "additionalProperties": false,
+        "properties": {
+          "zarr_url": {
+            "title": "Zarr Url",
+            "type": "string",
+            "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
+          },
+          "parent_label_name": {
+            "title": "Parent Label Name",
+            "type": "string",
+            "description": "Name of the parent label."
+          },
+          "child_label_name": {
+            "title": "Child Label Name",
+            "type": "string",
+            "description": "Name of the child label. This label will be assigned to the parent label based on overlap. The parent label will appear in the child feature table as the \"(parent_label_name)_label\" column in the obs table of the anndata table."
+          },
+          "overlap_threshold": {
+            "default": 1.0,
+            "title": "Overlap Threshold",
+            "type": "number",
+            "description": "The minimum percentage (between 0 and 1) of child label object that must be contained in parent label object to be considered a match."
+          },
+          "overlap_table_name": {
+            "title": "Overlap Table Name",
+            "type": "string",
+            "description": "Name of the feature table to which the overlap should be added. If the feature table already exists, the overlap measurements are added to it. Otherwise, an overlap table is created. If no name was given, a new table named parent_label_name + child_label_name + '_overlap' is created."
+          },
+          "level_path": {
+            "title": "Level Path",
+            "type": "string",
+            "description": "Resolution of the label image to calculate overlap. Full resolution label is used by default. Typically overriden with 0 (full resolution), 1 (half resolution), etc."
+          }
+        },
+        "required": [
+          "zarr_url",
+          "parent_label_name",
+          "child_label_name"
+        ],
+        "type": "object",
+        "title": "LabelAssignmentByOverlap"
+      },
+      "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
     }
   ],
   "has_args_schemas": true,

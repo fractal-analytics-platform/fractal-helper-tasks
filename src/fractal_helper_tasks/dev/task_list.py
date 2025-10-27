@@ -43,4 +43,11 @@ TASK_LIST = [
         tags=["Singleton Z dimension"],
         docs_info="file:docs_info/drop_t_dimension.md",
     ),
+    ParallelTask(
+        name="Assign Label by Overlap",
+        executable="label_assignment_by_overlap.py",
+        meta={"cpus_per_task": 1, "mem": 4000},
+        tags=["Label assignment", "Label processing"],
+        docs_info="file:docs_info/label_assignment_by_overlap.md",
+    ),
 ]

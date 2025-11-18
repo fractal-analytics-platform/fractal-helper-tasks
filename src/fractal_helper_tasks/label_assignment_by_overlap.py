@@ -178,7 +178,15 @@ def label_assignment_by_overlap(
                 f"The existing table {overlap_table_name} is not a "
                 "FeatureTable. Cannot add overlap measurements to it."
             )
-        base_table = base_table_container.dataframe
+        try:
+            base_table = base_table_container.dataframe
+        except Exception as e:
+            if "X is None, cannot convert to dataframe" in str(e):
+                # handle loading of empty feature table
+                base_table = pd.DataFrame()
+            else:
+                # re-raise all other ValueErrors
+                raise
         # If the table already contains the overlap measurement, drop it
         if parent_label_column_name in base_table.columns:
             base_table.drop(
@@ -194,14 +202,17 @@ def label_assignment_by_overlap(
             overlap_table_name = f"{parent_label_name}_{child_label_name}_overlap"
 
         # Initialize a new empty table with label index
-        labels = np.unique(child_label)[1:]  # FIXME: Handle empty label image
+        labels = np.unique(child_label)[1:]
         base_table = pd.DataFrame(index=labels)
         base_table.index.name = "label"
 
     # merge with child feature obs data
-    merged_data = pd.merge(
-        base_table, assignments, left_on="label", right_index=True, how="left"
-    )
+    if len(base_table) > 0:
+        merged_data = pd.merge(
+            base_table, assignments, left_on="label", right_index=True, how="left"
+        )
+    else:
+        merged_data = assignments
 
     merged_table = FeatureTable(
         table_data=merged_data,

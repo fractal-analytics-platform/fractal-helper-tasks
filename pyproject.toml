@@ -30,7 +30,8 @@ dependencies = [
     "ngio>=0.4.1, <0.5.0",
     "fractal-task-tools==0.0.12",
     "pyarrow<21.0.0",
-    "scikit-image"
+    "scikit-image",
+    "dask<2025.11.0"
 ]
 
 # Optional dependencies (e.g. for `pip install -e ".[dev]"`, see

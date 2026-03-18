@@ -16,7 +16,7 @@ import dask.array as da
 import ngio
 from pydantic import validate_call
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("drop_t_dimension")
 
 
 @validate_call

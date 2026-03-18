@@ -14,7 +14,7 @@ from pydantic import validate_call
 
 from fractal_helper_tasks.utils import normalize_chunk_size_dict
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("rechunk_zarr")
 
 
 def change_chunks(

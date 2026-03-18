@@ -16,7 +16,7 @@ import dask.array as da
 import ngio
 from pydantic import validate_call
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("add_z_singleton")
 
 
 @validate_call

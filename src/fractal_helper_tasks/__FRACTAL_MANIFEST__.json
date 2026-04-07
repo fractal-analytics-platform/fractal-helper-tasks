@@ -73,8 +73,16 @@
             "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
           },
           "label_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "Label Name",
-            "type": "string",
             "description": "Name of the label to copy from 2D OME-Zarr to 3D OME-Zarr"
           },
           "level": {
@@ -84,22 +92,46 @@
             "description": "Level of the 2D OME-Zarr label to copy from. Valid choices are \"0\", \"1\", etc. (depending on which levels are available in the OME-Zarr label)."
           },
           "tables_to_copy": {
-            "items": {
-              "type": "string"
-            },
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "Tables To Copy",
-            "type": "array",
             "description": "List of tables to copy from 2D OME-Zarr to 3D OME-Zarr"
           },
           "new_label_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "New Label Name",
-            "type": "string",
             "description": "Optionally overwriting the name of the label in the 3D OME-Zarr"
           },
           "new_table_names": {
-            "items": {},
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "New Table Names",
-            "type": "array",
             "description": "Optionally overwriting the names of the tables in the 3D OME-Zarr"
           },
           "plate_suffix": {
@@ -109,18 +141,42 @@
             "description": "Suffix of the 2D OME-Zarr that needs to be removed to generate the path to the 3D OME-Zarr. If the 2D OME-Zarr is \"/path/to/my_plate_mip.zarr/B/03/0\" and the 3D OME-Zarr is located in \"/path/to/my_plate.zarr/B/03/0\", the correct suffix is \"_mip\"."
           },
           "image_suffix_2D_to_remove": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "Image Suffix 2D To Remove",
-            "type": "string",
             "description": "If the image name between 2D & 3D don't match, this is the suffix that should be removed from the 2D image. If the 2D image is in \"/path/to/my_plate_mip.zarr/B/03/ 0_registered\" and the 3D image is in \"/path/to/my_plate.zarr/ B/03/0\", the value should be \"_registered\""
           },
           "image_suffix_3D_to_add": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "Image Suffix 3D To Add",
-            "type": "string",
             "description": "If the image name between 2D & 3D don't match, this is the suffix that should be added to the 3D image. If the 2D image is in \"/path/to/my_plate_mip.zarr/B/03/0\" and the 3D image is in \"/path/to/my_plate.zarr/B/03/0_illum_corr\", the value should be \"_illum_corr\"."
           },
           "z_chunks": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "Z Chunks",
-            "type": "integer",
             "description": "Chunking for the Z dimension. Set this parameter if you want the label image to be chunked differently from the 3D image in the Z dimension."
           },
           "overwrite": {
@@ -160,11 +216,26 @@
             "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
           },
           "chunk_sizes": {
-            "additionalProperties": {
-              "type": "integer"
-            },
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "Chunk Sizes",
-            "type": "object",
             "description": "Dictionary of chunk sizes to adapt. One can set any of the t, c, z, y, x axes that exist in the input image to be resized to a different chunk size. For example, {\"y\": 4000, \"x\": 4000} will set a new x & y chunking while maintaining the other chunk sizes. {\"z\": 10} will just change the Z chunking while keeping all other chunk sizes the same as the input."
           },
           "suffix": {
@@ -288,13 +359,29 @@
             "description": "The minimum percentage (between 0 and 1) of child label object that must be contained in parent label object to be considered a match."
           },
           "overlap_table_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "Overlap Table Name",
-            "type": "string",
             "description": "Name of the feature table to which the overlap should be added. If the feature table already exists, the overlap measurements are added to it. Otherwise, an overlap table is created. If no name was given, a new table named parent_label_name + child_label_name + '_overlap' is created."
           },
           "level_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
             "title": "Level Path",
-            "type": "string",
             "description": "Resolution of the label image to calculate overlap. Full resolution label is used by default. Typically overriden with 0 (full resolution), 1 (half resolution), etc."
           }
         },
@@ -310,6 +397,6 @@
     }
   ],
   "has_args_schemas": true,
-  "args_schema_version": "pydantic_v2",
+  "args_schema_version": "fractal_schema_v1",
   "authors": "Joel Luethi"
 }

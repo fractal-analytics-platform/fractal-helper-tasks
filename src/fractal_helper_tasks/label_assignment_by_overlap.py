@@ -17,7 +17,7 @@ from ngio.tables import FeatureTable
 from pydantic import validate_call
 from skimage.measure import regionprops_table
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("label_assignment_by_overlap")
 
 
 def label_overlap(

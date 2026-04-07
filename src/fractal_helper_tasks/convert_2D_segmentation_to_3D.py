@@ -8,7 +8,7 @@ import ngio
 from ngio.utils import NgioFileNotFoundError
 from pydantic import validate_call
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("convert_2D_segmentation_to_3D")
 
 
 @validate_call

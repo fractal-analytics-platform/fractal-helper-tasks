@@ -28,7 +28,7 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "ngio>=0.4.1, <0.5.0",
-    "fractal-task-tools==0.5.0",
+    "fractal-task-tools>=0.5.0,<0.6.0",
     "pyarrow<21.0.0",
     "scikit-image",
     "dask<2025.11.0"

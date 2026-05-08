@@ -18,7 +18,7 @@ def convert_2D_segmentation_to_3D(
     level: str = "0",
     tables_to_copy: Optional[list[str]] = None,
     new_label_name: Optional[str] = None,
-    new_table_names: Optional[list] = None,
+    new_table_names: Optional[list[str]] = None,
     plate_suffix: str = "_mip",
     image_suffix_2D_to_remove: Optional[str] = None,
     image_suffix_3D_to_add: Optional[str] = None,

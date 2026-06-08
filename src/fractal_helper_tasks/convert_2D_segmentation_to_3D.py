@@ -149,7 +149,6 @@ def convert_2D_segmentation_to_3D(
 
         z_extent = nb_z_planes * pixel_size.z
 
-        print(pixel_size)
         new_label_container = ome_zarr_container_3d.derive_label(
             name=new_label_name,
             ref_image=ref_image_3d,

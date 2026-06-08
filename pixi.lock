@@ -1176,8 +1176,8 @@ packages:
   requires_python: '>=2.7,!=3.0,!=3.1,!=3.2,!=3.3,!=3.4,<4'
 - pypi: ./
   name: fractal-helper-tasks
-  version: 0.4.2.dev14+g1ef135eaa.d20260608
-  sha256: 0032f1b5c6424bfcf47a00a09a902f4bb3cfe2ce4b4d248a5f932811db7322ba
+  version: 0.4.2.dev20+gcfb642987
+  sha256: e27fb4d16c9b06209d44d6f02cfd086a0041010300258a768fe1aaf51d0cab02
   requires_dist:
   - dask<2025.11.0
   - fractal-task-tools>=0.5.0,<0.6.0

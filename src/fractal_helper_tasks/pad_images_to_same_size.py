@@ -1,0 +1,148 @@
+# Copyright 2025 (C) BioVisionCenter, University of Zurich
+#
+# Original authors:
+# Joel Lüthi <joel.luethi@uzh.ch>
+"""Task to pad all images to the same size by extending zarr metadata."""
+
+import logging
+import os
+from pathlib import Path
+
+import ngio
+import zarr
+from ngio.utils import NgioValidationError
+from pydantic import validate_call
+
+logger = logging.getLogger("pad_images_to_same_size")
+
+
+def _check_is_hcs_plate(plate_root: str) -> None:
+    """Raise ValueError if plate_root is not an HCS plate."""
+    try:
+        ngio.open_ome_zarr_plate(plate_root)
+    except NgioValidationError as e:
+        raise ValueError(
+            f"The path '{plate_root}' does not appear to be an HCS plate. "
+            "`pad_by_plate=True` requires all images to belong to an HCS plate. "
+            f"Original error: {e}"
+        ) from e
+
+
+def _pad_group(zarr_urls: list[str]) -> None:
+    """Pad all images in a group to the per-axis maximum size."""
+    # Collect shapes at every pyramid level for every image
+    containers = [ngio.open_ome_zarr_container(url) for url in zarr_urls]
+    level_paths_per_image = [c.level_paths for c in containers]
+
+    # Verify all images have the same number of pyramid levels
+    n_levels = len(level_paths_per_image[0])
+    for url, paths in zip(zarr_urls, level_paths_per_image, strict=True):
+        if len(paths) != n_levels:
+            raise ValueError(
+                f"Image '{url}' has {len(paths)} pyramid levels, but other "
+                f"images in the group have {n_levels}. All images must have "
+                "the same number of pyramid levels."
+            )
+
+    # For each pyramid level, find the per-axis max shape across all images
+    level_paths = level_paths_per_image[0]
+    target_shapes_per_level: list[tuple[int, ...]] = []
+    for level_path in level_paths:
+        shapes_at_level = [c.get_image(path=level_path).shape for c in containers]
+        # Max per axis independently
+        target = tuple(
+            max(s[i] for s in shapes_at_level) for i in range(len(shapes_at_level[0]))
+        )
+        target_shapes_per_level.append(target)
+
+    # Resize each image that is smaller than the target at level 0
+    target_shape_l0 = target_shapes_per_level[0]
+    for url, container in zip(zarr_urls, containers, strict=True):
+        img_l0 = container.get_image()
+        current_shape_l0 = img_l0.shape
+        axes_handler = img_l0.axes_handler
+
+        z_idx = axes_handler.get_index("z")
+        y_idx = axes_handler.get_index("y")
+        x_idx = axes_handler.get_index("x")
+
+        needs_padding = any(
+            idx is not None and current_shape_l0[idx] < target_shape_l0[idx]
+            for idx in [z_idx, y_idx, x_idx]
+        )
+        if not needs_padding:
+            logger.info(f"{url}: already at target size, skipping.")
+            continue
+
+        logger.info(f"{url}: padding from {current_shape_l0} to {target_shape_l0}.")
+
+        for level_path, target_shape in zip(
+            level_paths, target_shapes_per_level, strict=True
+        ):
+            img_at_level = container.get_image(path=level_path)
+            current = list(img_at_level.shape)
+
+            for idx, _axis in [(z_idx, "z"), (y_idx, "y"), (x_idx, "x")]:
+                if idx is not None:
+                    current[idx] = target_shape[idx]
+
+            new_shape = tuple(current)
+            array_path = os.path.join(url, level_path)
+            zarr.open(array_path, mode="r+").resize(new_shape)
+            logger.info(f"  Level {level_path}: resized to {new_shape}")
+
+
+@validate_call
+def pad_images_to_same_size(
+    *,
+    zarr_urls: list[str],
+    zarr_dir: str,
+    pad_by_plate: bool = False,
+) -> None:
+    """Pad all images to the same size by extending zarr array metadata.
+
+    Extends the shape metadata in the zarr arrays so that all images report
+    the same size. No data is copied; regions outside the original array
+    return the fill value (0) when read.
+
+    Args:
+        zarr_urls: Paths to all OME-Zarr images to be processed.
+            (standard argument for Fractal non-parallel tasks).
+        zarr_dir: Path to the directory containing the OME-Zarr images.
+            (standard argument for Fractal non-parallel tasks).
+        pad_by_plate: If True, images are grouped by their parent HCS plate
+            and padded to the maximum size within each plate separately.
+            All images must belong to an HCS plate when this is enabled.
+            If False, all images are padded to the global maximum size.
+    """
+    logger.info(
+        f"Running `pad_images_to_same_size` on {len(zarr_urls)} images, "
+        f"{pad_by_plate=}."
+    )
+
+    if pad_by_plate:
+        # Group by plate root (3 levels up from image: image → col → row → plate)
+        groups: dict[str, list[str]] = {}
+        for url in zarr_urls:
+            plate_root = str(Path(url.rstrip("/")).parents[2])
+            groups.setdefault(plate_root, []).append(url)
+
+        for plate_root, group_urls in groups.items():
+            logger.info(
+                f"Processing plate '{plate_root}' with {len(group_urls)} images."
+            )
+            _check_is_hcs_plate(plate_root)
+            _pad_group(group_urls)
+    else:
+        _pad_group(zarr_urls)
+
+    logger.info("Finished `pad_images_to_same_size`.")
+
+
+if __name__ == "__main__":
+    from fractal_task_tools.task_wrapper import run_fractal_task
+
+    run_fractal_task(
+        task_function=pad_images_to_same_size,
+        logger_name=logger.name,
+    )

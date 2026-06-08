@@ -1,6 +1,7 @@
 """Fractal Task list for Fractal Helper Tasks."""
 
 from fractal_task_tools.task_models import (
+    NonParallelTask,
     ParallelTask,
 )
 
@@ -56,5 +57,11 @@ TASK_LIST = [
         meta={"cpus_per_task": 1, "mem": 4000},
         tags=["Label assignment", "Label processing"],
         docs_info="file:docs_info/label_assignment_by_overlap.md",
+    ),
+    NonParallelTask(
+        name="Pad Images to Same Size",
+        executable="pad_images_to_same_size.py",
+        meta={"cpus_per_task": 1, "mem": 4000},
+        tags=["Padding", "HCS plate"],
     ),
 ]

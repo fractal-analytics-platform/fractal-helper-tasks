@@ -60,18 +60,30 @@ def drop_t_dimension(
     del axes_names[t_index]
     chunk_sizes = old_ome_zarr_img.chunks
     new_chunk_sizes = chunk_sizes[:t_index] + chunk_sizes[t_index + 1 :]
-    new_ome_zarr_container = old_ome_zarr.derive_image(
+
+    new_ome_zarr_container = ngio.create_empty_ome_zarr(
         store=zarr_url_new,
         shape=new_img.shape,
         chunks=new_chunk_sizes,
         dtype=old_ome_zarr_img.dtype,
-        pixel_size=new_pixel_size,
+        pixelsize=new_pixel_size.x,
+        z_spacing=new_pixel_size.z,
         axes_names=axes_names,
-        copy_tables=True,
+        overwrite=True,
     )
+
     new_image_container = new_ome_zarr_container.get_image()
     new_image_container.set_array(new_img)
     new_image_container.consolidate()
+
+    for table in old_ome_zarr.list_tables():
+        logger.info(f"Copying table {table} to new OME-Zarr.")
+        old_table_container = old_ome_zarr.get_table(name=table)
+        new_ome_zarr_container.add_table(
+            name=table,
+            table=old_table_container,
+            overwrite=True,
+        )
 
     if overwrite_input:
         image_list_update = dict(zarr_url=zarr_url_old, types=dict(has_t=False))

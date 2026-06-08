@@ -21,7 +21,7 @@ def test_drop_t_dimension(
     ngio.create_ome_zarr_from_array(
         store=zarr_url,
         array=np.zeros((1, 1, 1, 100, 100)),
-        xy_pixelsize=0.5,
+        pixelsize=0.5,
         z_spacing=1.0,
         axes_names="tczyx",
         overwrite=True,
@@ -38,7 +38,7 @@ def test_drop_t_dimension(
         result_url = f"{zarr_url}_no_T"
 
     result_container = ngio.open_ome_zarr_container(result_url)
-    assert result_container.image_meta.axes_handler.axes_names == (
+    assert result_container.meta.axes_handler.axes_names == (
         "c",
         "z",
         "y",

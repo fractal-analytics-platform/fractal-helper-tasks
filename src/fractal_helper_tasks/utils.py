@@ -4,10 +4,8 @@
 # Joel Lüthi <joel.luethi@uzh.ch>
 """Utils for helper tasks."""
 
-from typing import Optional
 
-
-def normalize_chunk_size_dict(chunk_sizes: dict[str, Optional[int]]):
+def normalize_chunk_size_dict(chunk_sizes: dict[str, int | None]):
     """Converts all chunk_size axes names to lower case and assert validity.
 
     Args:
@@ -26,7 +24,6 @@ def normalize_chunk_size_dict(chunk_sizes: dict[str, Optional[int]]):
     for axis in chunk_sizes_norm:
         if axis not in valid_axes:
             raise ValueError(
-                f"Axis {axis} is not supported. Valid axes choices are "
-                f"{valid_axes}."
+                f"Axis {axis} is not supported. Valid axes choices are {valid_axes}."
             )
     return chunk_sizes_norm

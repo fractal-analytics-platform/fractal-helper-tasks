@@ -17,30 +17,25 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04, macos-latest]
-        python-version: ["3.11", "3.12"]
-        exclude:
-          - os: macos-latest
-            python-version: '3.10'
-    name: "Core, Python ${{ matrix.python-version }}, ${{ matrix.os }}"
-    runs-on: ${{ matrix.os }}
+        python-version: ["3.11", "3.12", "3.13"]
+    name: "Core, Python ${{  matrix.python-version }}, ${{  matrix.os }}"
+    runs-on: ${{  matrix.os }}
     timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{  matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{  matrix.python-version }}
           cache: "pip"
 
       - name: Install package
         run: python -m pip install -e .[dev]
-
-      - name: Install some testing dependencies (hard-coded)
-        run: python -m pip install pytest pytest-cov devtools jsonschema requests wget pooch
 
       - name: Cache Pooch folder
         id: cache-pooch-folder
@@ -60,6 +55,8 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: jluethi/fractal-helper-tasks
+      - name: Check if manifest has changed
+        run: fractal-manifest check --package fractal_helper_tasks
   
   deploy:
     name: Deploy
@@ -78,6 +75,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5

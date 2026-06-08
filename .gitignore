@@ -20,7 +20,8 @@ lib/
 lib64/
 parts/
 sdist/
-var/
+# var can not be ignored since it used in anndata
+# var/
 wheels/
 *.egg-info/
 .installed.cfg
@@ -71,9 +72,6 @@ docs/_build/
 # PyBuilder
 target/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
 # pyenv
 .python-version
 
@@ -113,3 +111,17 @@ ENV/
 
 # Local dev files
 examples/test_rechunk_zarr.ipynb
+.idea/
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# Zarr
+*.zarr
+# if you have a specific zarr file to add
+#!data/specific_file.zarr
+
+# Notebooks
+*.ipynb
+.ipynb_checkpoints

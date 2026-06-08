@@ -1,4 +1,5 @@
 """Dev script to test the Drop T dimension task."""
+
 from fractal_helper_tasks.drop_t_dimension import drop_t_dimension
 
 input_paths = [

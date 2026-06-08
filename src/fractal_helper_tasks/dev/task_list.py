@@ -1,6 +1,14 @@
 """Fractal Task list for Fractal Helper Tasks."""
 
-from fractal_task_tools.task_models import ParallelTask
+from fractal_task_tools.task_models import (
+    ParallelTask,
+)
+
+AUTHORS = "Joel Luethi"
+
+
+DOCS_LINK = "https://github.com/fractal-analytics-platform/fractal-helper-tasks"
+
 
 DOCS_LINK = "https://github.com/jluethi/fractal-helper-tasks"
 TASK_LIST = [

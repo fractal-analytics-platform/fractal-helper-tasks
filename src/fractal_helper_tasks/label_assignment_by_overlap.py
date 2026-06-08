@@ -8,7 +8,6 @@
 """Task to assign labels based on overlap between two label images."""
 
 import logging
-from typing import Optional
 
 import ngio
 import numpy as np
@@ -94,8 +93,8 @@ def label_assignment_by_overlap(
     parent_label_name: str,
     child_label_name: str,
     overlap_threshold: float = 1.0,
-    overlap_table_name: Optional[str] = None,
-    level_path: Optional[str] = None,
+    overlap_table_name: str | None = None,
+    level_path: str | None = None,
 ):
     """Assign labels to each other based on overlap.
 
@@ -148,8 +147,7 @@ def label_assignment_by_overlap(
         ).get_array()
         # make the assignment
         logger.info(
-            "Calculating label assignments with overlap threshold "
-            f"{overlap_threshold}."
+            f"Calculating label assignments with overlap threshold {overlap_threshold}."
         )
         assignments = assign_objects(
             parent_label,

@@ -12,6 +12,24 @@ source = "vcs"
 [tool.hatch.build.targets.wheel]
 packages = ["src/fractal_helper_tasks"]
 
+# Clean up the source distribution to avoid big tag.gz files
+[tool.hatch.build.targets.sdist]
+exclude = [
+    # Exclude tests from the source distribution
+    "tests",
+    # Exclude typically large files and directories that are not needed
+    # This might not exists or be named differently in your project
+    # TBD if we want to include these or not
+    "docs",
+    "data",
+    "examples",
+    "notebooks",
+    ".github",
+    # Remove all jupyter notebook and checkpoints
+    "**/*.ipynb_checkpoints",
+    "**/*.ipynb",
+    # NB all things in .gitignore are excluded by default of hatchling
+]
 
 # Project metadata (see https://peps.python.org/pep-0621)
 [project]
@@ -25,11 +43,11 @@ authors = [
 ]
 
 # Required Python version and dependencies
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 dependencies = [
     "ngio>=0.4.1, <0.5.0",
     "fractal-task-tools>=0.5.0,<0.6.0",
-    "pyarrow<21.0.0",
+    # "pyarrow<21.0.0",
     "scikit-image",
     "dask<2025.11.0"
 ]
@@ -37,13 +55,23 @@ dependencies = [
 # Optional dependencies (e.g. for `pip install -e ".[dev]"`, see
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies)
 [project.optional-dependencies]
-dev = ["devtools", "hatch", "pytest", "requests", "jsonschema", "ruff", "pre-commit", "pooch", "pillow"]
-test = ["pytest", "pytest-cov"]
+dev = [
+    "notebook",
+    "devtools",
+    "hatch",
+    "pytest",
+    "requests",
+    "jsonschema",
+    "ruff",
+    "pre-commit",
+    "pooch", 
+    "pillow",
+]
 
 # https://docs.astral.sh/ruff
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py311"
 src = ["src"]
 
 # https://docs.astral.sh/ruff/rules
@@ -81,15 +109,37 @@ ignore = [
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 89
-skip-magic-trailing-comma = false  # default is false
+skip-magic-trailing-comma = false # default is false
 
-[tool.coverage.run]
-# Include only the specific package directories for coverage, exclude tests
-include = [
-    "src/fractal_helper_tasks/*"
-]
-omit = [
-    "*/tests/*",
-    "*_test.py",
-    "setup.py"
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tool.pixi.pypi-dependencies]
+fractal-helper-tasks = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.pixi.tasks]
+install-pre-commit = { cmd = ["pre-commit", "install"] }
+format-imports = { cmd = ["ruff", "check", "--select", "I", "--fix"] }
+format-code = { cmd = ["ruff", "format", "."] }
+
+create-manifest = { cmd = [
+    "fractal-manifest",
+    "create",
+    "--package",
+    "fractal-helper-tasks",
+] }
+
+test = { cmd = ["pytest", "./tests/"] }
+
+init-tasks = [
+    { task = "install-pre-commit", environment = "dev" },
+    { task = "format-code", environment = "dev" },
+    { task = "format-imports", environment = "dev" },
+    { task = "create-manifest", environment = "dev" },
+    { task = "test", environment = "dev" },
 ]

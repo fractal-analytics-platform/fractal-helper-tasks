@@ -62,26 +62,37 @@ def add_z_singleton(
     # Insert singleton Z dimension
     image_with_z = da.expand_dims(image, axis=insert_index)
     logger.info(f"Original shape: {image.shape}, new shape: {image_with_z.shape}")
-    axes_names_with_z = axes_names[:insert_index] + ["z"] + axes_names[insert_index:]
+    axes_names_with_z = axes_names[:insert_index] + ["z"] + axes_names[insert_index:]  # noqa RUF005
 
     pixel_size = old_ome_zarr_img.pixel_size
     new_pixel_size = ngio.PixelSize(x=pixel_size.x, y=pixel_size.y, z=1.0)
 
     chunk_sizes = old_ome_zarr_img.chunks
-    new_chunk_sizes = chunk_sizes[:insert_index] + (1,) + chunk_sizes[insert_index:]
+    new_chunk_sizes = chunk_sizes[:insert_index] + (1,) + chunk_sizes[insert_index:]  # noqa RUF005
 
-    new_ome_zarr_container = old_ome_zarr.derive_image(
+    new_ome_zarr_container = ngio.create_empty_ome_zarr(
         store=zarr_url_new,
         shape=image_with_z.shape,
         chunks=new_chunk_sizes,
         dtype=old_ome_zarr_img.dtype,
-        pixel_size=new_pixel_size,
+        pixelsize=new_pixel_size.x,
+        z_spacing=new_pixel_size.z,
         axes_names=axes_names_with_z,
-        copy_tables=True,
+        overwrite=True,
     )
+
     new_image_container = new_ome_zarr_container.get_image()
     new_image_container.set_array(image_with_z)
     new_image_container.consolidate()
+
+    for table in old_ome_zarr.list_tables():
+        logger.info(f"Copying table {table} to new OME-Zarr.")
+        old_table_container = old_ome_zarr.get_table(name=table)
+        new_ome_zarr_container.add_table(
+            name=table,
+            table=old_table_container,
+            overwrite=True,
+        )
 
     # TODO: Also handle copying over & adding Z dimension to label images?
 

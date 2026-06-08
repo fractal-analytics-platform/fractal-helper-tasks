@@ -1,7 +1,6 @@
 """Fractal task to convert 2D segmentations into 3D segmentations."""
 
 import logging
-from typing import Optional
 
 import dask.array as da
 import ngio
@@ -14,15 +13,15 @@ logger = logging.getLogger("convert_2D_segmentation_to_3D")
 @validate_call
 def convert_2D_segmentation_to_3D(
     zarr_url: str,
-    label_name: Optional[str] = None,
+    label_name: str | None = None,
     level: str = "0",
-    tables_to_copy: Optional[list[str]] = None,
-    new_label_name: Optional[str] = None,
-    new_table_names: Optional[list[str]] = None,
+    tables_to_copy: list[str] | None = None,
+    new_label_name: str | None = None,
+    new_table_names: list[str] | None = None,
     plate_suffix: str = "_mip",
-    image_suffix_2D_to_remove: Optional[str] = None,
-    image_suffix_3D_to_add: Optional[str] = None,
-    z_chunks: Optional[int] = None,
+    image_suffix_2D_to_remove: str | None = None,
+    image_suffix_3D_to_add: str | None = None,
+    z_chunks: int | None = None,
     overwrite: bool = False,
 ) -> None:
     """Convert 2D segmentation to 3D segmentation.
@@ -127,40 +126,34 @@ def convert_2D_segmentation_to_3D(
                 f"{label_img.axes}."
             )
 
-        chunks = list(label_img.chunks)
         label_dask = label_img.get_array(mode="dask")
 
         # 2) Set up the 3D label image
         ref_image_3d = ome_zarr_container_3d.get_image(
             pixel_size=label_img.pixel_size,
         )
+        chunks = list(ref_image_3d.chunks)
 
-        z_index = label_img.axes_handler.get_index("z")
-        y_index = label_img.axes_handler.get_index("y")
-        x_index = label_img.axes_handler.get_index("x")
         z_index_3d_reference = ref_image_3d.axes_handler.get_index("z")
+
         if z_chunks:
-            chunks[z_index] = z_chunks
+            chunks[z_index_3d_reference] = z_chunks
         else:
-            chunks[z_index] = ref_image_3d.chunks[z_index_3d_reference]
+            chunks[z_index_3d_reference] = ref_image_3d.chunks[z_index_3d_reference]
         chunks = tuple(chunks)
 
         nb_z_planes = ref_image_3d.shape[z_index_3d_reference]
 
-        shape_3d = (nb_z_planes, label_img.shape[y_index], label_img.shape[x_index])
-
         pixel_size = label_img.pixel_size
         pixel_size.z = ref_image_3d.pixel_size.z
-        axes_names = label_img.meta.axes_handler.axes_names
 
         z_extent = nb_z_planes * pixel_size.z
 
         new_label_container = ome_zarr_container_3d.derive_label(
             name=new_label_name,
             ref_image=ref_image_3d,
-            shape=shape_3d,
-            pixel_size=pixel_size,
-            axes_names=axes_names,
+            pixelsize=pixel_size.x,
+            z_spacing=pixel_size.z,
             chunks=chunks,
             dtype=label_img.dtype,
             overwrite=overwrite,
@@ -196,7 +189,7 @@ def convert_2D_segmentation_to_3D(
                 or table.table_type() == "masking_roi_table"
             ):
                 for roi in table.rois():
-                    roi.z_length = z_extent
+                    roi.get("z").length = z_extent
                 ome_zarr_container_3d.add_table(
                     name=new_table_names[i],
                     table=table,

@@ -7,7 +7,7 @@
 import logging
 import os
 import shutil
-from typing import Any, Optional
+from typing import Any
 
 import ngio
 from pydantic import validate_call
@@ -20,7 +20,7 @@ logger = logging.getLogger("rechunk_zarr")
 def change_chunks(
     initial_chunks: list[int],
     multiscale: ngio.Image | ngio.Label,
-    chunk_sizes: dict[str, Optional[int]],
+    chunk_sizes: dict[str, int | None],
 ) -> list[int]:
     """Create a new chunk_size list with rechunking.
 
@@ -45,7 +45,7 @@ def change_chunks(
 def rechunk_zarr(
     *,
     zarr_url: str,
-    chunk_sizes: Optional[dict[str, Optional[int]]] = None,
+    chunk_sizes: dict[str, int | None] | None = None,
     suffix: str = "rechunked",
     rechunk_labels: bool = True,
     rebuild_pyramids: bool = True,
@@ -81,7 +81,7 @@ def rechunk_zarr(
 
     rechunked_zarr_url = zarr_url + f"_{suffix}"
     ome_zarr_container = ngio.open_ome_zarr_container(zarr_url)
-    pyramid_paths = ome_zarr_container.levels_paths
+    pyramid_paths = ome_zarr_container.level_paths
     highest_res_img = ome_zarr_container.get_image()
     chunks = highest_res_img.chunks
     new_chunksize = change_chunks(
@@ -94,7 +94,7 @@ def rechunk_zarr(
 
     new_ome_zarr_container = ome_zarr_container.derive_image(
         store=rechunked_zarr_url,
-        name=ome_zarr_container.image_meta.name,
+        name=ome_zarr_container.meta.name,
         overwrite=overwrite,
         copy_labels=not rechunk_labels,
         copy_tables=True,

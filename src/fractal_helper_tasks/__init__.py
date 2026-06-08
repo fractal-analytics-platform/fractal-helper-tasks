@@ -3,6 +3,6 @@
 from importlib.metadata import PackageNotFoundError, version
 
 try:
-    __version__ = version("fractal-helper-tasks")
+    __version__ = version("fractal_helper_tasks")
 except PackageNotFoundError:
     __version__ = "uninstalled"

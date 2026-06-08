@@ -41,7 +41,7 @@ def test_add_singleton(
     ngio.create_ome_zarr_from_array(
         store=zarr_url,
         array=np.zeros(orig_dimensions),
-        xy_pixelsize=0.5,
+        pixelsize=0.5,
         axes_names=orig_axes_names,
         overwrite=True,
     )
@@ -60,8 +60,7 @@ def test_add_singleton(
 
     new_ome_zarr_container = ngio.open_ome_zarr_container(new_zarr_url)
     assert (
-        list(new_ome_zarr_container.image_meta.axes_handler.axes_names)
-        == target_axes_names
+        list(new_ome_zarr_container.meta.axes_handler.axes_names) == target_axes_names
     )
     assert new_ome_zarr_container.get_image().pixel_size.z == 1.0
     assert new_ome_zarr_container.get_image().shape == target_dimensions

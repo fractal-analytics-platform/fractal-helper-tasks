@@ -32,7 +32,7 @@ def test_label_assignment_by_overlap_new_table(
     ome_zarr_container = ngio.create_ome_zarr_from_array(
         store=zarr_url,
         array=np.zeros(orig_dimensions),
-        xy_pixelsize=0.5,
+        pixelsize=0.5,
         axes_names=orig_axes_names,
         overwrite=True,
     )
@@ -98,7 +98,7 @@ def test_label_assignment_by_overlap_existing_feature_table(
     ome_zarr_container = ngio.create_ome_zarr_from_array(
         store=zarr_url,
         array=np.zeros(orig_dimensions),
-        xy_pixelsize=0.5,
+        pixelsize=0.5,
         axes_names=orig_axes_names,
         overwrite=True,
     )
@@ -174,7 +174,7 @@ def test_label_assignment_by_overlap_existing_roi_table(
     ome_zarr_container = ngio.create_ome_zarr_from_array(
         store=zarr_url,
         array=np.zeros(orig_dimensions),
-        xy_pixelsize=0.5,
+        pixelsize=0.5,
         axes_names=orig_axes_names,
         overwrite=True,
     )

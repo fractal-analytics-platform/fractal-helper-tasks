@@ -251,4 +251,42 @@ def test_2d_to_3d_real_data_no_label_copy(tmp_zenodo_zarr: list[str]):
     )
 
 
+def test_2d_to_3d_image_suffix_3D_to_add(tmp_path: Path):
+    """Test that image_suffix_3D_to_add correctly resolves the 3D zarr path."""
+    zarr_url = str(tmp_path / "plate_mip.zarr" / "B" / "03" / "0")
+    zarr_url_3d = str(tmp_path / "plate.zarr" / "B" / "03" / "0_corrected")
+    label_name = "nuclei"
+
+    create_synthetic_data(zarr_url, zarr_url_3d, label_name)
+
+    convert_2D_segmentation_to_3D(
+        zarr_url=zarr_url,
+        label_name=label_name,
+        image_suffix_3D_to_add="_corrected",
+    )
+
+    ome_zarr_3d = ngio.open_ome_zarr_container(zarr_url_3d)
+    assert label_name in ome_zarr_3d.list_labels()
+
+
+def test_2d_to_3d_z_chunks(tmp_path: Path):
+    """Test that z_chunks sets the Z chunk size of the output label."""
+    zarr_url = str(tmp_path / "plate_mip.zarr" / "B" / "03" / "0")
+    zarr_url_3d = str(tmp_path / "plate.zarr" / "B" / "03" / "0")
+    label_name = "nuclei"
+
+    create_synthetic_data(zarr_url, zarr_url_3d, label_name)
+
+    convert_2D_segmentation_to_3D(
+        zarr_url=zarr_url,
+        label_name=label_name,
+        z_chunks=2,
+    )
+
+    ome_zarr_3d = ngio.open_ome_zarr_container(zarr_url_3d)
+    label_img = ome_zarr_3d.get_label(label_name)
+    z_index = label_img.axes_handler.get_index("z")
+    assert label_img.chunks[z_index] == 2
+
+
 # TODO: Test table content more carefully

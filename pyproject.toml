@@ -45,7 +45,7 @@ authors = [
 # Required Python version and dependencies
 requires-python = ">=3.11,<3.14"
 dependencies = [
-    "ngio>=0.4.1, <0.5.0",
+    "ngio>=0.5.12, <0.6.0",
     "fractal-task-tools>=0.5.0,<0.6.0",
     # "pyarrow<21.0.0",
     "scikit-image",
@@ -60,6 +60,7 @@ dev = [
     "devtools",
     "hatch",
     "pytest",
+    "pytest-cov",
     "requests",
     "jsonschema",
     "ruff",
@@ -134,6 +135,7 @@ create-manifest = { cmd = [
     "fractal-helper-tasks",
 ] }
 
+[tool.pixi.feature.dev.tasks]
 test = { cmd = ["pytest", "./tests/"] }
 
 init-tasks = [

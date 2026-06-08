@@ -28,14 +28,14 @@ def create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0):
     ome_zarr_2d = ngio.create_ome_zarr_from_array(
         store=zarr_url,
         array=base_array,
-        xy_pixelsize=0.5,
+        pixelsize=0.5,
         z_spacing=1.0,
     )
 
     ngio.create_ome_zarr_from_array(
         store=zarr_url_3d,
         array=base_array_3d,
-        xy_pixelsize=0.5,
+        pixelsize=0.5,
         z_spacing=z_spacing,
     )
 
@@ -135,7 +135,7 @@ def test_2d_to_3d_table_copying(tmp_path: Path):
     ome_zarr_2d = ngio.open_ome_zarr_container(zarr_url)
     roi_table = ome_zarr_2d.get_table("masking_ROI_table")
     assert roi_table.table_type() == "masking_roi_table"
-    assert roi_table.rois()[0].z_length == 1.0
+    assert roi_table.rois()[0].get("z").length == 1.0
 
     convert_2D_segmentation_to_3D(
         zarr_url=zarr_url,
@@ -150,18 +150,18 @@ def test_2d_to_3d_table_copying(tmp_path: Path):
     rois = roi_table.rois()
     assert len(rois) == 1
     assert rois[0].name == "1"
-    assert rois[0].x_length == 10.0
+    assert rois[0].get("x").length == 10.0
     # z_length goes from 1 to 10 because we have 10 z planes
-    assert rois[0].z_length == 10.0
+    assert rois[0].get("z").length == 10.0
 
     roi_table = ome_zarr_3d.get_table("image_ROI_table")
     assert roi_table.table_type() == "roi_table"
     rois = roi_table.rois()
     assert len(rois) == 1
     assert rois[0].name == "image_ROI_table"
-    assert rois[0].x_length == 50.0
+    assert rois[0].get("x").length == 50.0
     # z_length goes from 1 to 10 because we have 10 z planes
-    assert rois[0].z_length == 10.0
+    assert rois[0].get("z").length == 10.0
 
 
 @pytest.mark.parametrize("z", [0.5, 1.0, 2.0])

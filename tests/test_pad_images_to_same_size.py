@@ -75,6 +75,14 @@ def test_pad_single_plate(tmp_path: Path):
         assert container.get_image().shape == (1, 10, 100, 100), (
             f"{url} has unexpected shape {container.get_image().shape}"
         )
+        for label_name in container.list_labels():
+            lbl_shape = container.get_label(label_name).shape
+            assert lbl_shape[-2] == 100, (
+                f"{url} label '{label_name}' y-dim: {lbl_shape}"
+            )
+            assert lbl_shape[-1] == 100, (
+                f"{url} label '{label_name}' x-dim: {lbl_shape}"
+            )
 
     # Verify all pyramid levels also match
     levels = ngio.open_ome_zarr_container(zarr_urls[0]).level_paths

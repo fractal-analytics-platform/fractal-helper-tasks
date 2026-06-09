@@ -5,7 +5,33 @@
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/fractal-analytics-platform/fractal-helper-tasks/build_and_test.yml?branch=main)
 [![codecov](https://codecov.io/gh/fractal-analytics-platform/fractal-helper-tasks/graph/badge.svg?token=ednmg2GzOw)](https://codecov.io/gh/fractal-analytics-platform/fractal-helper-tasks)
 
-Collection of Fractal helper tasks
+Collection of Fractal helper tasks for working with OME-Zarr images in [Fractal](https://fractal-analytics-platform.github.io/) workflows.
+
+## Tasks
+
+**Drop T Dimension** — Removes a singleton T dimension from an OME-Zarr image. Optionally overwrites the input in place.
+
+**Add Z Singleton** — Adds a singleton Z dimension to a 2D OME-Zarr, producing a 3D-compatible image. Optionally overwrites the input in place.
+
+**Rechunk Zarr** — Rechunks an OME-Zarr image with user-defined chunk sizes per axis (e.g. `{"y": 4000, "x": 4000}`). Rebuilds pyramids and optionally applies the same rechunking to all label images.
+
+**Convert 2D Segmentation to 3D** — Replicates a 2D label image along the Z axis of the corresponding 3D OME-Zarr. Useful when segmentation was run on a projected image but needs to be stored back in the 3D image. Supports copying associated feature tables.
+
+**Label Assignment by Overlap** — Assigns child labels to parent labels based on spatial overlap. Stores results as a feature table with configurable overlap threshold.
+
+**Pad Images to Same Size** — Extends zarr array shape metadata so that all images in the workflow share the same spatial dimensions (ZYX). No data is copied; regions outside the original extent return the fill value. Can group images by HCS plate (`pad_by_plate=True`) and optionally pads label images alongside each image (`pad_labels=True`, default). Useful to make e.g. the napari viewer work on the plate level for search-first images.
+
+## Installation instructions
+You can install this task package on Fractal. It's recommended to install it via pixi:
+1. Download the tar.gz from the release page
+2. Add it to Tasks -> Manage tasks -> Pixi -> Upload tar.gz file
+
+Alternatively, you can install it via the whl file or locally install the package as:
+```
+git clone https://github.com/fractal-analytics-platform/fractal-helper-tasks
+cd fractal-helper-tasks
+pip install .
+```
 
 ## Development instructions
 

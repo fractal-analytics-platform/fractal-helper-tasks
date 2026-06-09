@@ -50,16 +50,7 @@ def create_plate_with_images(
 def test_pad_single_plate(tmp_path: Path):
     """Two wells in one plate: smaller one gets padded to match the larger."""
     plate_path = tmp_path / "plate.zarr"
-    plate_path_tmp = tmp_path / "plate_tmp.zarr"
-    print(plate_path_tmp)
 
-    zarr_urls = create_plate_with_images(
-        plate_path_tmp,
-        [
-            ("B", "03", "0", (1, 10, 50, 50)),
-            ("B", "04", "0", (1, 10, 100, 100)),
-        ],
-    )
     zarr_urls = create_plate_with_images(
         plate_path,
         [

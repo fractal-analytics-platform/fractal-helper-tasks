@@ -38,11 +38,12 @@ jobs:
         run: python -m pip install -e .[dev]
 
       - name: Cache Pooch folder
-        id: cache-pooch-folder
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: ~/.cache/pooch
-          key: pooch-cache
+          path: |
+            ~/.cache/pooch
+            ~/Library/Caches/pooch
+          key: pooch-${{ runner.os }}-${{ hashFiles('tests/conftest.py') }}
 
       - name: Check if manifest has changed
         run: fractal-manifest check --package fractal-helper-tasks

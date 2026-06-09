@@ -41,6 +41,14 @@ def zenodo_zarr(testdata_path: Path) -> list[str]:
         retry_if_failed=10,
         allow_updates=False,
     )
+    downloader = pooch.HTTPDownloader(
+        headers={
+            "User-Agent": (
+                f"pooch/{pooch.__version__} "
+                "(https://github.com/fractal-analytics-platform/fractal-helper-tasks)"
+            )
+        }
+    )
 
     for ind, file_name in enumerate(
         [
@@ -50,7 +58,9 @@ def zenodo_zarr(testdata_path: Path) -> list[str]:
     ):
         # 1) Download/unzip a single Zarr from Zenodo
         file_paths = POOCH.fetch(
-            f"{file_name}.zip", processor=pooch.Unzip(extract_dir=file_name)
+            f"{file_name}.zip",
+            processor=pooch.Unzip(extract_dir=file_name),
+            downloader=downloader,
         )
         zarr_full_path = file_paths[0].split(file_name)[0] + file_name
         folder = folders[ind]

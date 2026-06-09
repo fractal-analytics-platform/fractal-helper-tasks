@@ -1,6 +1,7 @@
 """Fractal Task list for Fractal Helper Tasks."""
 
 from fractal_task_tools.task_models import (
+    CompoundTask,
     NonParallelTask,
     ParallelTask,
 )
@@ -63,11 +64,21 @@ TASK_LIST = [
         executable="pad_images_to_same_size.py",
         meta={"cpus_per_task": 1, "mem": 4000},
         tags=["Padding", "HCS plate"],
+        docs_info="file:docs_info/pad_images_to_same_size.md",
     ),
     NonParallelTask(
         name="Delete Labels and Tables",
         executable="delete_labels_tables.py",
         meta={"cpus_per_task": 1, "mem": 1000},
         tags=["Labels", "Tables", "Cleanup"],
+    ),
+    CompoundTask(
+        name="Copy Labels to Multiplexing Acquisitions (HCS)",
+        executable_init="copy_labels_multiplexing_init.py",
+        meta_init={"cpus_per_task": 1, "mem": 4000},
+        executable="copy_labels_multiplexing.py",
+        meta={"cpus_per_task": 1, "mem": 4000},
+        tags=["HCS", "Multiplexing", "Labels"],
+        docs_info="file:docs_info/copy_labels_multiplexing.md",
     ),
 ]

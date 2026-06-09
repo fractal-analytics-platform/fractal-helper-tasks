@@ -41,6 +41,45 @@ def change_chunks(
     return initial_chunks
 
 
+def _add_to_well_if_in_plate(zarr_url: str, rechunked_zarr_url: str) -> None:
+    """Register rechunked image in HCS well metadata if the image is in a plate.
+
+    Plate structure is plate.zarr/ROW/COL/image_path, so the plate root is
+    three levels above the image. If opening the grandparent as a plate fails
+    for any reason (not a zarr, not a plate, not in a well), this is a no-op.
+    """
+    well_path = os.path.dirname(zarr_url)
+    plate_root = os.path.dirname(os.path.dirname(well_path))
+    row_col = well_path[len(plate_root) :].strip("/")
+
+    if "/" not in row_col:
+        return
+
+    row, col = row_col.split("/", 1)
+    image_basename = os.path.basename(zarr_url)
+    rechunked_basename = os.path.basename(rechunked_zarr_url)
+
+    try:
+        plate = ngio.open_ome_zarr_plate(plate_root)
+        well = plate.get_well(row=row, column=col)
+        acq_id = well.get_image_acquisition_id(image_basename)
+        plate.add_image(
+            row=row,
+            column=col,
+            image_path=rechunked_basename,
+            acquisition_id=acq_id,
+        )
+        logger.info(
+            f"Added '{rechunked_basename}' to well '{row}/{col}' "
+            f"with acquisition_id={acq_id}."
+        )
+    except Exception:
+        logger.debug(
+            f"'{zarr_url}' does not appear to be part of an HCS plate — "
+            "skipping well metadata update."
+        )
+
+
 @validate_call
 def rechunk_zarr(
     *,
@@ -144,8 +183,7 @@ def rechunk_zarr(
         shutil.rmtree(f"{zarr_url}_tmp")
         return
     else:
-        # FIXME: Update well metadata to add the new image if the image is in
-        # a well
+        _add_to_well_if_in_plate(zarr_url, rechunked_zarr_url)
         output = dict(
             image_list_updates=[
                 dict(

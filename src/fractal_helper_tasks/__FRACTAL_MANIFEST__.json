@@ -202,7 +202,7 @@
         "Rechunking",
         "Many files"
       ],
-      "docs_info": "### Purpose\n- Rechunks OME-Zarr to new chunking parameters: Changes whether the array is stored as many small files or few larger files.\n- Optionally applies the same rechunking to label images.\n- Optionally rebuilds pyramids from scratch in the rechunked image.\n\n### Outputs\n- A **new Zarr image** written alongside the original, with `_{suffix}` appended to the name (default: `_rechunked`).\n\n### Limitations\n- Does not support in-place rechunking \u2014 always writes a new Zarr; there is no `overwrite_input` option.\n",
+      "docs_info": "### Purpose\n- Rechunks OME-Zarr to new chunking parameters: Changes whether the array is stored as many small files or few larger files.\n- Optionally applies the same rechunking to label images.\n- Optionally rebuilds pyramids from scratch in the rechunked image.\n\n### Outputs\n- By default (`overwrite_input=True`): rechunks **in place** \u2014 the original Zarr is replaced with the rechunked version.\n- With `overwrite_input=False`: writes a new Zarr alongside the original, with `_{suffix}` appended to the name (default suffix: `_rechunked`).\n\n### Limitations\n- In-place mode uses a temporary rename (`_tmp`) followed by deletion of the original; this is not atomic and requires sufficient disk space to hold both copies during the operation.\n",
       "type": "parallel",
       "executable_parallel": "rechunk_zarr.py",
       "meta_parallel": {

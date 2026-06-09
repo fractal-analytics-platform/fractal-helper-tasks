@@ -4,7 +4,8 @@
 - Optionally rebuilds pyramids from scratch in the rechunked image.
 
 ### Outputs
-- A **new Zarr image** written alongside the original, with `_{suffix}` appended to the name (default: `_rechunked`).
+- By default (`overwrite_input=True`): rechunks **in place** — the original Zarr is replaced with the rechunked version.
+- With `overwrite_input=False`: writes a new Zarr alongside the original, with `_{suffix}` appended to the name (default suffix: `_rechunked`).
 
 ### Limitations
-- Does not support in-place rechunking — always writes a new Zarr; there is no `overwrite_input` option.
+- In-place mode uses a temporary rename (`_tmp`) followed by deletion of the original; this is not atomic and requires sufficient disk space to hold both copies during the operation.

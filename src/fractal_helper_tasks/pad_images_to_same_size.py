@@ -28,7 +28,70 @@ def _check_is_hcs_plate(plate_root: str) -> None:
         ) from e
 
 
-def _pad_group(zarr_urls: list[str]) -> None:
+def _pad_image_labels(
+    container,
+    zarr_url: str,
+    level_paths: list[str],
+    spatial_targets_per_level: list[dict[str, int]],
+) -> None:
+    """Pad all labels in an image to match the padded image's spatial dimensions.
+
+    Args:
+        container: Open ngio OmeZarrContainer for the image.
+        zarr_url: Path to the OME-Zarr image.
+        level_paths: Pyramid level paths (e.g. ['0', '1', '2']).
+        spatial_targets_per_level: Per-level dicts mapping axis name to target
+            size, e.g. [{"z": 10, "y": 100, "x": 100}, ...].
+    """
+    label_names = container.list_labels()
+    if not label_names:
+        return
+
+    img_pixel_size = container.get_image().pixel_size
+
+    for label_name in label_names:
+        label = container.get_label(label_name)
+
+        lbl_pixel_size = label.pixel_size
+        if (
+            lbl_pixel_size.x != img_pixel_size.x
+            or lbl_pixel_size.y != img_pixel_size.y
+            or lbl_pixel_size.z != img_pixel_size.z
+        ):
+            raise ValueError(
+                f"Label '{label_name}' in '{zarr_url}' has pixel size "
+                f"{lbl_pixel_size} which does not match the image pixel size "
+                f"{img_pixel_size}. Cannot pad label."
+            )
+
+        if len(label.meta.paths) != len(level_paths):
+            raise ValueError(
+                f"Label '{label_name}' in '{zarr_url}' has "
+                f"{len(label.meta.paths)} pyramid levels, but the image has "
+                f"{len(level_paths)}. Cannot pad label."
+            )
+
+        logger.info(f"{zarr_url}: padding label '{label_name}'.")
+        for level_path, spatial_target in zip(
+            level_paths, spatial_targets_per_level, strict=True
+        ):
+            lbl_at_level = container.get_label(label_name, path=level_path)
+            current = list(lbl_at_level.shape)
+            lbl_axes = lbl_at_level.axes_handler
+            for axis, size in spatial_target.items():
+                lbl_idx = lbl_axes.get_index(axis)
+                if lbl_idx is not None:
+                    current[lbl_idx] = size
+            new_label_shape = tuple(current)
+            array_path = os.path.join(zarr_url, "labels", label_name, level_path)
+            zarr.open(array_path, mode="r+").resize(new_label_shape)
+            logger.info(
+                f"  Label '{label_name}' level {level_path}: "
+                f"resized to {new_label_shape}"
+            )
+
+
+def _pad_group(zarr_urls: list[str], pad_labels: bool = True) -> None:
     """Pad all images in a group to the per-axis maximum size."""
     # Collect shapes at every pyramid level for every image
     containers = [ngio.open_ome_zarr_container(url) for url in zarr_urls]
@@ -91,6 +154,16 @@ def _pad_group(zarr_urls: list[str]) -> None:
             zarr.open(array_path, mode="r+").resize(new_shape)
             logger.info(f"  Level {level_path}: resized to {new_shape}")
 
+        if pad_labels:
+            spatial_targets = []
+            for target_shape in target_shapes_per_level:
+                spatial: dict[str, int] = {}
+                for idx, axis in [(z_idx, "z"), (y_idx, "y"), (x_idx, "x")]:
+                    if idx is not None:
+                        spatial[axis] = target_shape[idx]
+                spatial_targets.append(spatial)
+            _pad_image_labels(container, url, level_paths, spatial_targets)
+
 
 @validate_call
 def pad_images_to_same_size(
@@ -98,6 +171,7 @@ def pad_images_to_same_size(
     zarr_urls: list[str],
     zarr_dir: str,
     pad_by_plate: bool = False,
+    pad_labels: bool = True,
 ) -> None:
     """Pad all images to the same size by extending zarr array metadata.
 
@@ -114,10 +188,14 @@ def pad_images_to_same_size(
             and padded to the maximum size within each plate separately.
             All images must belong to an HCS plate when this is enabled.
             If False, all images are padded to the global maximum size.
+        pad_labels: If True, label images within each OME-Zarr are also
+            padded to match the padded image's spatial dimensions. Labels
+            must have the same pixel size and number of pyramid levels as
+            the image; a ValueError is raised otherwise.
     """
     logger.info(
         f"Running `pad_images_to_same_size` on {len(zarr_urls)} images, "
-        f"{pad_by_plate=}."
+        f"{pad_by_plate=}, {pad_labels=}."
     )
 
     if pad_by_plate:
@@ -132,9 +210,9 @@ def pad_images_to_same_size(
                 f"Processing plate '{plate_root}' with {len(group_urls)} images."
             )
             _check_is_hcs_plate(plate_root)
-            _pad_group(group_urls)
+            _pad_group(group_urls, pad_labels)
     else:
-        _pad_group(zarr_urls)
+        _pad_group(zarr_urls, pad_labels)
 
     logger.info("Finished `pad_images_to_same_size`.")
 

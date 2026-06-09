@@ -430,6 +430,12 @@
             "title": "Pad By Plate",
             "type": "boolean",
             "description": "If True, images are grouped by their parent HCS plate and padded to the maximum size within each plate separately. All images must belong to an HCS plate when this is enabled. If False, all images are padded to the global maximum size."
+          },
+          "pad_labels": {
+            "default": true,
+            "title": "Pad Labels",
+            "type": "boolean",
+            "description": "If True, label images within each OME-Zarr are also padded to match the padded image's spatial dimensions. Labels must have the same pixel size and number of pyramid levels as the image; a ValueError is raised otherwise."
           }
         },
         "required": [

@@ -42,14 +42,12 @@ def zenodo_zarr(testdata_path: Path) -> list[str]:
         allow_updates=False,
     )
     downloader = pooch.DOIDownloader(
-        downloader=pooch.HTTPDownloader(
-            headers={
-                "User-Agent": (
-                    f"pooch/{pooch.__version__} "
-                    "(https://github.com/fractal-analytics-platform/fractal-helper-tasks)"
-                )
-            }
-        )
+        headers={
+            "User-Agent": (
+                f"pooch/{pooch.__version__} "
+                "(https://github.com/fractal-analytics-platform/fractal-helper-tasks)"
+            )
+        }
     )
 
     for ind, file_name in enumerate(

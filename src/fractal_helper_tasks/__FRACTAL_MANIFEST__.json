@@ -521,6 +521,60 @@
       "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
     },
     {
+      "name": "Rename Channels",
+      "tags": [
+        "Channels",
+        "Metadata"
+      ],
+      "docs_info": "### Purpose\n- Renames channels in OME-Zarr images by supplying a mapping of old names to new names.\n- Only updates Zarr metadata \u2014 no image arrays are rewritten, so the operation is fast regardless of image size.\n- The mapping may contain more entries than a given image has channels (e.g. in multiplexing, where different images carry different channel subsets). Channels not found in an image are skipped with a warning by default.\n\n### Outputs\n- Updated channel names in the Zarr metadata of each image.\n\n### Limitations\n- Only renames channels; does not reorder them or change other channel metadata (colors, wavelength IDs, display ranges).\n- Edits Zarr metadata in-place and irreversibly.\n",
+      "type": "non_parallel",
+      "executable_non_parallel": "rename_channels.py",
+      "meta_non_parallel": {
+        "cpus_per_task": 1,
+        "mem": 1000
+      },
+      "args_schema_non_parallel": {
+        "additionalProperties": false,
+        "properties": {
+          "zarr_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Zarr Urls",
+            "type": "array",
+            "description": "Paths to all OME-Zarr images to be processed. (standard argument for Fractal non-parallel tasks)."
+          },
+          "zarr_dir": {
+            "title": "Zarr Dir",
+            "type": "string",
+            "description": "Path to the directory containing the OME-Zarr images. (standard argument for Fractal non-parallel tasks)."
+          },
+          "channel_name_map": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Channel Name Map",
+            "type": "object",
+            "description": "Mapping of old channel name to new channel name. Enter the old channel name as the key and the new channel name as the value. May contain more entries than an image has channels; unmatched entries are skipped. Useful in multiplexing workflows where different images carry different channel subsets."
+          },
+          "fail_on_missing_channels": {
+            "default": false,
+            "title": "Fail On Missing Channels",
+            "type": "boolean",
+            "description": "If ``True``, raise a ``ValueError`` when any key in ``channel_name_map`` is absent from an image's channels. Defaults to ``False`` (skip with a warning)."
+          }
+        },
+        "required": [
+          "zarr_urls",
+          "zarr_dir",
+          "channel_name_map"
+        ],
+        "type": "object",
+        "title": "RenameChannels"
+      },
+      "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
+    },
+    {
       "name": "Copy Labels to Multiplexing Acquisitions (HCS)",
       "tags": [
         "HCS",

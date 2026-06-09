@@ -73,6 +73,13 @@ TASK_LIST = [
         tags=["Labels", "Tables", "Cleanup"],
         docs_info="file:docs_info/delete_labels_tables.md",
     ),
+    NonParallelTask(
+        name="Rename Channels",
+        executable="rename_channels.py",
+        meta={"cpus_per_task": 1, "mem": 1000},
+        tags=["Channels", "Metadata"],
+        docs_info="file:docs_info/rename_channels.md",
+    ),
     CompoundTask(
         name="Copy Labels to Multiplexing Acquisitions (HCS)",
         executable_init="copy_labels_multiplexing_init.py",

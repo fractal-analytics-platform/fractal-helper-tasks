@@ -64,4 +64,10 @@ TASK_LIST = [
         meta={"cpus_per_task": 1, "mem": 4000},
         tags=["Padding", "HCS plate"],
     ),
+    NonParallelTask(
+        name="Delete Labels and Tables",
+        executable="delete_labels_tables.py",
+        meta={"cpus_per_task": 1, "mem": 1000},
+        tags=["Labels", "Tables", "Cleanup"],
+    ),
 ]

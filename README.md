@@ -9,17 +9,30 @@ Collection of Fractal helper tasks for working with OME-Zarr images in [Fractal]
 
 ## Tasks
 
+### Image dimension tasks
+
 **Drop T Dimension** — Removes a singleton T dimension from an OME-Zarr image. Optionally overwrites the input in place.
 
-**Add Z Singleton** — Adds a singleton Z dimension to a 2D OME-Zarr, producing a 3D-compatible image. Optionally overwrites the input in place.
+**Add Z Singleton** — Adds a singleton Z dimension to a 2D OME-Zarr, producing a 3D-compatible image. Overwrites the input in place by default.
 
 **Rechunk Zarr** — Rechunks an OME-Zarr image with user-defined chunk sizes per axis (e.g. `{"y": 4000, "x": 4000}`). Rebuilds pyramids and optionally applies the same rechunking to all label images.
+
+**Pad Images to Same Size (HCS)** — Extends Zarr array shape metadata so that all images in the plate share the same spatial dimensions (ZYX). No data is copied; regions outside the original extent return the fill value. Optionally pads label images alongside each image. Useful to fix display issues (e.g. ViZarr, napari plate overview, MoBie) caused by wells of unequal sizes in search-first acquisitions.
+
+### Segmentation-related tasks
 
 **Convert 2D Segmentation to 3D** — Replicates a 2D label image along the Z axis of the corresponding 3D OME-Zarr. Useful when segmentation was run on a projected image but needs to be stored back in the 3D image. Supports copying associated feature tables.
 
 **Label Assignment by Overlap** — Assigns child labels to parent labels based on spatial overlap. Stores results as a feature table with configurable overlap threshold.
 
-**Pad Images to Same Size** — Extends zarr array shape metadata so that all images in the workflow share the same spatial dimensions (ZYX). No data is copied; regions outside the original extent return the fill value. Can group images by HCS plate (`pad_by_plate=True`) and optionally pads label images alongside each image (`pad_labels=True`, default). Useful to make e.g. the napari viewer work on the plate level for search-first images.
+**Copy Labels to Multiplexing Acquisitions (HCS)** — Copies label images from a reference acquisition to all other acquisitions in the same HCS well. Must be run after registration has been applied to the non-reference images, so all acquisitions share the same coordinate space.
+
+### Metadata and cleanup tasks
+
+**Rename Channels** — Renames channels by supplying a mapping of old → new names. Only updates Zarr metadata; no arrays are rewritten. The mapping may contain more entries than a given image has channels, making it convenient for multiplexing workflows where different images carry different channel subsets.
+
+**Delete Labels and Tables** — Deletes specified label images and/or tables from OME-Zarr images. Entries absent from a given image are silently skipped.
+
 
 ## Installation instructions
 You can install this task package on Fractal. It's recommended to install it via pixi:

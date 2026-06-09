@@ -71,6 +71,7 @@ TASK_LIST = [
         executable="delete_labels_tables.py",
         meta={"cpus_per_task": 1, "mem": 1000},
         tags=["Labels", "Tables", "Cleanup"],
+        docs_info="file:docs_info/delete_labels_tables.md",
     ),
     CompoundTask(
         name="Copy Labels to Multiplexing Acquisitions (HCS)",

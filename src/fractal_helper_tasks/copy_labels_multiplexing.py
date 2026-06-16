@@ -71,7 +71,4 @@ def copy_labels_multiplexing(
 if __name__ == "__main__":
     from fractal_task_tools.task_wrapper import run_fractal_task
 
-    run_fractal_task(
-        task_function=copy_labels_multiplexing,
-        logger_name=logger.name,
-    )
+    run_fractal_task(task_function=copy_labels_multiplexing)

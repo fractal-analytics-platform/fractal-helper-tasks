@@ -184,7 +184,10 @@ def test_2d_to_3d_z_spacing(tmp_path: Path, z):
     assert label_img_3d.shape == (10, 100, 100)
     assert ome_zarr_3d.get_label(name=label_name).pixel_size.z == z
 
-
+# nuclei table from Zenodo has wrong anndata index column type
+@pytest.mark.filterwarnings(
+    "ignore:Transforming to str index:anndata._warnings.ImplicitModificationWarning"
+)
 def test_2d_to_3d_real_data(tmp_zenodo_zarr: list[str]):
     print(tmp_zenodo_zarr)
     zarr_url = f"{tmp_zenodo_zarr[1]}/B/03/0"
@@ -217,6 +220,10 @@ def test_2d_to_3d_real_data(tmp_zenodo_zarr: list[str]):
     )
 
 
+# nuclei table from Zenodo has wrong anndata index column type
+@pytest.mark.filterwarnings(
+    "ignore:Transforming to str index:anndata._warnings.ImplicitModificationWarning"
+)
 def test_2d_to_3d_real_data_no_label_copy(tmp_zenodo_zarr: list[str]):
     print(tmp_zenodo_zarr)
     zarr_url = f"{tmp_zenodo_zarr[1]}/B/03/0"
@@ -227,7 +234,7 @@ def test_2d_to_3d_real_data_no_label_copy(tmp_zenodo_zarr: list[str]):
 
     # Add a generic table to be copied over
     generic_table = GenericTable(
-        table_data=pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
+        table_data=pd.DataFrame({"col1": [1, 2], "col2": [3, 4]}, index=["0", "1"])
     )
 
     ome_zarr_2d.add_table(

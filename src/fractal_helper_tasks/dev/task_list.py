@@ -89,4 +89,11 @@ TASK_LIST = [
         tags=["HCS", "Multiplexing", "Labels"],
         docs_info="file:docs_info/copy_labels_multiplexing.md",
     ),
+    ParallelTask(
+        name="ROI Selection",
+        executable="roi_selection_task.py",
+        meta={"cpus_per_task": 1, "mem": 4000},
+        tags=["ROI", "Write ROI"],
+        docs_info="file:docs_info/roi_selection_task.md",
+    ),
 ]

@@ -68,7 +68,7 @@ def zenodo_zarr(testdata_path: Path) -> list[str]:
         # 2) Copy the downloaded Zarr into tests/data
         if os.path.isdir(str(folder)):
             shutil.rmtree(str(folder))
-        shutil.copytree(Path(zarr_full_path) / file_name, folder)
+        shutil.copytree(Path(zarr_full_path) / file_name, folder, ignore=shutil.ignore_patterns(".DS_Store"))
     return [str(f) for f in folders]
 
 
@@ -77,6 +77,6 @@ def tmp_zenodo_zarr(zenodo_zarr: list[str], tmpdir: Path) -> list[str]:
     """Generates a copy of the zenodo zarrs in a tmpdir"""
     zenodo_mip_path = str(tmpdir / Path(zenodo_zarr[1]).name)
     zenodo_path = str(tmpdir / Path(zenodo_zarr[0]).name)
-    shutil.copytree(zenodo_zarr[0], zenodo_path)
-    shutil.copytree(zenodo_zarr[1], zenodo_mip_path)
+    shutil.copytree(zenodo_zarr[0], zenodo_path, ignore=shutil.ignore_patterns(".DS_Store"))
+    shutil.copytree(zenodo_zarr[1], zenodo_mip_path, ignore=shutil.ignore_patterns(".DS_Store"))
     return [zenodo_path, zenodo_mip_path]

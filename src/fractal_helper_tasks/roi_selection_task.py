@@ -165,7 +165,7 @@ def corners_to_roi(corners: RoiCorners, image: Image) -> Roi:
     # --- Z axis validation ---
     if has_z and not z_provided:
         raise ValueError(
-            f"ROI '{corners.name}': image has a Z axis but z1/z2 coordinates"
+            f"ROI '{corners.name}': image has a Z axis but z1/z2 coordinates "
             "were not provided."
         )
     if not has_z and z_provided:

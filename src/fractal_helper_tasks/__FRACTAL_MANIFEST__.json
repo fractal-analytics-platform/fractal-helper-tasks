@@ -690,7 +690,7 @@
             },
             "title": "Roi Corners",
             "type": "array",
-            "description": "List of ROIs as JSON string as provided by the the Vizarr ROI plugin. Specifically, x and y corners are provided in world coordinates (physical units). T and Z are optional and provided as indices."
+            "description": "List of ROIs as JSON string as provided by the Vizarr ROI plugin. X and Y corners are provided in world coordinates (physical units). T and Z are optional and provided as indices."
           },
           "output_table_name": {
             "default": "user_ROIs",
@@ -702,7 +702,7 @@
             "default": false,
             "title": "Overwrite",
             "type": "boolean",
-            "description": "Whether to overwrite the output ROI table if it exists. If overwrite is False, ROIs are appended to the existing ROI table (given they come with unique ROI names). If overwrite is set tot True, the table is replaced with a fresh ROI table only containing the ROIs provided here."
+            "description": "Whether to overwrite the output ROI table if it exists. If overwrite is False, ROIs are appended to the existing ROI table (given they come with unique ROI names). If overwrite is set to True, the table is replaced with a fresh ROI table only containing the ROIs provided here."
           }
         },
         "required": [

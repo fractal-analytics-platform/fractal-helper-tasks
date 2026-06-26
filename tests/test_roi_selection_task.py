@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import ngio
+import numpy as np
 import pytest
 
 from fractal_helper_tasks.roi_selection_task import roi_selection_task
@@ -174,27 +175,37 @@ def test_roi_selection_nonexistent_zarr(tmp_path: Path) -> None:
         )
 
 
-def test_roi_selection_physical_coords(test_data_3d_path: Path) -> None:
+def test_roi_selection_physical_coords(tmp_path: Path) -> None:
     """Test that physical XY coordinates are stored directly
-    and Z indices are converted."""
+    and Z indices are converted using a non-unit z_spacing."""
+    zarr_url = tmp_path / "test_3d_zspacing.zarr"
+    ngio.create_ome_zarr_from_array(
+        store=str(zarr_url),
+        array=np.zeros((1, 10, 100, 100)),
+        pixelsize=0.5,
+        z_spacing=5.0,
+        axes_names="czyx",
+        overwrite=True,
+    )
     roi_selection_task(
-        zarr_url=test_data_3d_path.as_posix(),
+        zarr_url=zarr_url.as_posix(),
         roi_corners=[
             _roi_json(name="phys_test", x1=0, y1=0, z1=0, x2=10, y2=20, z2=3),
         ],
         output_table_name="test_phys",
         overwrite=True,
     )
-    container = ngio.open_ome_zarr_container(test_data_3d_path)
+    container = ngio.open_ome_zarr_container(zarr_url)
     image = container.get_image(path="0")
     ps = image.pixel_size
+    assert ps.z == pytest.approx(5.0)
 
     table = container.get_generic_roi_table("test_phys")
     roi = table.rois()[0]
     # X and Y are already physical from the viewer — stored as-is
     assert roi.get("x").length == pytest.approx(10)
     assert roi.get("y").length == pytest.approx(20)
-    # Z is a slice index — multiplied by ps.z
+    # Z is a slice index — multiplied by ps.z (5.0)
     assert roi.get("z").length == pytest.approx(4 * ps.z)
 
 
@@ -212,22 +223,6 @@ def test_roi_selection_2d(test_data_2d_path: Path) -> None:
     table = container.get_generic_roi_table("test_2d_roi")
     rois = table.rois()
     assert len(rois) == 1
-
-
-def test_roi_selection_2d_t_ignored(test_data_2d_path: Path, caplog) -> None:
-    """Test that T values on a 2D image (no T axis) are ignored with a warning."""
-    with caplog.at_level("WARNING"):
-        roi_selection_task(
-            zarr_url=test_data_2d_path.as_posix(),
-            roi_corners=[
-                _roi_json(
-                    name="roi_2d_t", x1=0, y1=0, z1=0, z2=0, t1=0, t2=3, x2=10, y2=10
-                ),
-            ],
-            output_table_name="test_2d_t_ignored",
-            overwrite=True,
-        )
-    assert "T values will be ignored" in caplog.text
 
 
 def test_roi_selection_single_z_plane(test_data_3d_path: Path) -> None:

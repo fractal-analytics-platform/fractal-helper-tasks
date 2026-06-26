@@ -35,7 +35,7 @@ Collection of Fractal helper tasks for working with OME-Zarr images in [Fractal]
 
 ### ROI tasks
 
-**ROI Selection** — Stores user-defined ROIs into an OME-Zarr ROI table. Each ROI is given by two corners in physical coordinates (as reported by the viewer); X and Y are stored as-is, while Z and T are treated as slice/frame indices and converted using the image pixel size. Corners may be supplied in any order, ROIs are validated against the image bounds, and results are written to a configurable table (default `user_ROIs`) that can be appended to or overwritten.
+**ROI Selection** — Stores user-defined ROIs into an OME-Zarr ROI table. Each ROI is given by two corners in physical coordinates (as reported by the Vizarr viewer ROI plugin); X and Y are stored as-is, while Z and T are treated as slice/frame indices and converted using the image pixel size. Corners may be supplied in any order, ROIs are validated against the image bounds, and results are written to a configurable table (default `user_ROIs`) that can be appended to or overwritten.
 
 
 ## Installation instructions

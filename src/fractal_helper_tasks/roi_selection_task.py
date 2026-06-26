@@ -18,7 +18,7 @@ def _roi_axis(roi: Roi, axis: str) -> tuple[float | None, float | None]:
     return s.start, s.length
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("roi_selection_task")
 
 # Regex pattern to validate JSON-like ROI corner strings.
 ROI_CORNERS_PATTERN = (
@@ -233,10 +233,18 @@ def roi_selection_task(
     Args:
         zarr_url: Path or url to the individual OME-Zarr image to be processed.
             (standard argument for Fractal tasks, managed by Fractal server).
-        roi_corners: List of ROIs as JSON strings, each defining two corners
-            in physical coordinates (from the viewer).
-        output_table_name: Name of the output ROI table to create.
+        roi_corners: List of ROIs as JSON string as provided by the Vizarr ROI plugin.
+            X and Y corners are provided in world coordinates (physical units).
+            T and Z are optional and provided as indices.
+
+
+        output_table_name: Name of the output ROI table to add the ROIs to
+            (will be created if it does not exist yet)
         overwrite: Whether to overwrite the output ROI table if it exists.
+            If overwrite is False, ROIs are appended to the existing ROI table
+            (given they come with unique ROI names).
+            If overwrite is set to True, the table is replaced with a fresh ROI table
+            only containing the ROIs provided here.
     """
     zarr_url = zarr_url.rstrip("/")
     logger.info(f"{zarr_url=}")
@@ -297,5 +305,4 @@ if __name__ == "__main__":
 
     run_fractal_task(
         task_function=roi_selection_task,
-        logger_name=logger.name,
     )

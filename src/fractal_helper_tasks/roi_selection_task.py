@@ -9,15 +9,6 @@ from ngio.common import Roi
 from ngio.tables.v1._roi_table import RoiTableV1
 from pydantic import BaseModel, Field, validate_call
 
-
-def _roi_axis(roi: Roi, axis: str) -> tuple[float | None, float | None]:
-    """Return (start, length) for *axis*, or (None, None) if absent."""
-    s = roi.get(axis)
-    if s is None:
-        return None, None
-    return s.start, s.length
-
-
 logger = logging.getLogger("roi_selection_task")
 
 # Regex pattern to validate JSON-like ROI corner strings.
@@ -81,14 +72,23 @@ class RoiCorners(BaseModel):
 
 
 def validate_roi_within_image(roi: Roi, image: Image) -> None:
-    """Validate that a physical-space ROI falls within the image bounds.
+    """Validate a physical-space ROI against the image bounds, clamping overflow.
+
+    The ROI is validated (and possibly modified in place) per axis:
+
+    - If the ROI origin (start) lies outside the image bounds, a ValueError
+      is raised.
+    - If the origin is within bounds but the ROI extends beyond the image,
+      the length is clamped so the ROI ends at the image bound and a warning
+      is logged.
 
     Args:
-        roi: The ROI in physical coordinates.
+        roi: The ROI in physical coordinates. Modified in place when its
+            extent needs to be clamped to the image bounds.
         image: The ngio Image to validate against.
 
     Raises:
-        ValueError: If the ROI extends outside the image bounds.
+        ValueError: If the ROI origin lies outside the image bounds.
     """
     ps = image.pixel_size
     dims = image.dimensions
@@ -99,35 +99,43 @@ def validate_roi_within_image(roi: Roi, image: Image) -> None:
     n_t = dims.get("t")
     image_t = n_t * ps.t if n_t is not None else None
 
-    rx, rx_len = _roi_axis(roi, "x")
-    ry, ry_len = _roi_axis(roi, "y")
-    rz, rz_len = _roi_axis(roi, "z")
-    rt, rt_len = _roi_axis(roi, "t")
-
     errors: list[str] = []
-    if rx is not None and rx_len is not None:
-        if rx < 0 or rx + rx_len > image_x:
+
+    def _check_axis(axis: str, image_len: float | None) -> None:
+        if image_len is None:
+            return
+        s = roi.get(axis)
+        if s is None or s.start is None or s.length is None:
+            return
+        if s.start < 0 or s.start > image_len:
             errors.append(
-                f"X range [{rx}, {rx + rx_len}] exceeds image bounds [0, {image_x}]"
+                f"{axis.upper()} origin {s.start} is outside image bounds "
+                f"[0, {image_len}]"
             )
-    if ry is not None and ry_len is not None:
-        if ry < 0 or ry + ry_len > image_y:
-            errors.append(
-                f"Y range [{ry}, {ry + ry_len}] exceeds image bounds [0, {image_y}]"
+            return
+        if s.start + s.length > image_len:
+            clamped_len = image_len - s.start
+            logger.warning(
+                "[WARNING] ROI '%s': %s range [%s, %s] exceeds image bounds "
+                "[0, %s]; clamping length from %s to %s.",
+                roi.name,
+                axis.upper(),
+                s.start,
+                s.start + s.length,
+                image_len,
+                s.length,
+                clamped_len,
             )
-    if image_z is not None and rz is not None and rz_len is not None:
-        if rz < 0 or rz + rz_len > image_z:
-            errors.append(
-                f"Z range [{rz}, {rz + rz_len}] exceeds image bounds [0, {image_z}]"
-            )
-    if image_t is not None and rt is not None and rt_len is not None:
-        if rt < 0 or rt + rt_len > image_t:
-            errors.append(
-                f"T range [{rt}, {rt + rt_len}] exceeds image bounds [0, {image_t}]"
-            )
+            s.length = clamped_len
+
+    _check_axis("x", image_x)
+    _check_axis("y", image_y)
+    _check_axis("z", image_z)
+    _check_axis("t", image_t)
+
     if errors:
         raise ValueError(
-            f"ROI '{roi.name}' is out of image bounds: {'; '.join(errors)}"
+            f"ROI '{roi.name}' origin is out of image bounds: {'; '.join(errors)}"
         )
 
 
@@ -154,7 +162,9 @@ def corners_to_roi(corners: RoiCorners, image: Image) -> Roi:
     Raises:
         ValueError: If the image has Z or T axis but the corresponding
             corner coordinates are not provided, or if the resulting ROI
-            falls outside the image bounds.
+            origin falls outside the image bounds. An ROI whose origin is
+            within bounds but whose extent exceeds the image is clamped to
+            the image bounds (with a warning).
     """
     ps = image.pixel_size
     has_z = image.has_axis("z")

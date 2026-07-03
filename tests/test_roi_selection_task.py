@@ -150,15 +150,40 @@ def test_roi_selection_empty_list(test_data_3d_path: Path) -> None:
         )
 
 
-def test_roi_selection_out_of_bounds(test_data_3d_path: Path) -> None:
-    """Test that ROIs outside image bounds raise ValueError."""
-    with pytest.raises(ValueError, match="out of image bounds"):
+def test_roi_selection_out_of_bounds_clamped(test_data_3d_path: Path, caplog) -> None:
+    """Test that an ROI with in-bounds origin but overflowing extent is clamped."""
+    # 3D fixture: 100x100 pixels at pixelsize 0.5 -> 50 physical units in x/y,
+    # 10 z-slices at z_spacing 1.0 -> 10 physical units in z.
+    with caplog.at_level("WARNING"):
         roi_selection_task(
             zarr_url=test_data_3d_path.as_posix(),
             roi_corners=[
-                _roi_json(name="oob", x1=0, y1=0, z1=0, x2=9999, y2=9999, z2=9999),
+                _roi_json(name="clamped", x1=0, y1=0, z1=0, x2=9999, y2=9999, z2=9999),
             ],
-            output_table_name="test_oob",
+            output_table_name="test_clamped",
+            overwrite=True,
+        )
+    assert "clamping length" in caplog.text
+    container = ngio.open_ome_zarr_container(test_data_3d_path)
+    table = container.get_generic_roi_table("test_clamped")
+    roi = table.rois()[0]
+    # Extent is clamped so the ROI ends exactly at the image bounds.
+    assert roi.get("x").start + roi.get("x").length == pytest.approx(50)
+    assert roi.get("y").start + roi.get("y").length == pytest.approx(50)
+    assert roi.get("z").start + roi.get("z").length == pytest.approx(10)
+
+
+def test_roi_selection_origin_out_of_bounds(test_data_3d_path: Path) -> None:
+    """Test that an ROI whose origin is outside image bounds raises ValueError."""
+    with pytest.raises(ValueError, match="origin is out of image bounds"):
+        roi_selection_task(
+            zarr_url=test_data_3d_path.as_posix(),
+            roi_corners=[
+                _roi_json(
+                    name="oob_origin", x1=9000, y1=9000, z1=0, x2=9999, y2=9999, z2=2
+                ),
+            ],
+            output_table_name="test_oob_origin",
             overwrite=True,
         )
 

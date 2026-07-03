@@ -9,7 +9,7 @@
 - With `overwrite=True`, the table is replaced.
 
 ### Limitations
-- ROIs must fall within the image bounds, otherwise the task raises an error.
+- The ROI origin (the corner closest to 0) must fall within the image bounds, otherwise the task raises an error. If the origin is within bounds but the ROI extends past the image, its extent is clamped to the image bounds and a warning is logged.
 - Z/T coordinates are required when the image has the corresponding axis, and are ignored (with a warning) when provided for an axis the image does not have.
 - ROI names must be unique within a single task call.
 - If ROI tables are drawn on an individual OME-Zarr image, take care to run the task just on that image and not on other OME-Zarr images.

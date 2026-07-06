@@ -2,8 +2,40 @@ import os
 import shutil
 from pathlib import Path
 
+import ngio
+import numpy as np
 import pooch
 import pytest
+
+
+@pytest.fixture
+def test_data_3d_path(tmp_path: Path) -> Path:
+    """A synthetic 3D (CZYX) OME-Zarr image for ROI selection tests."""
+    zarr_url = tmp_path / "test_3d.zarr"
+    ngio.create_ome_zarr_from_array(
+        store=str(zarr_url),
+        array=np.zeros((1, 10, 100, 100)),
+        pixelsize=0.5,
+        z_spacing=1.0,
+        axes_names="czyx",
+        overwrite=True,
+    )
+    return zarr_url
+
+
+@pytest.fixture
+def test_data_2d_path(tmp_path: Path) -> Path:
+    """A synthetic 2D-like (CZYX with singleton Z) OME-Zarr image."""
+    zarr_url = tmp_path / "test_2d.zarr"
+    ngio.create_ome_zarr_from_array(
+        store=str(zarr_url),
+        array=np.zeros((1, 1, 100, 100)),
+        pixelsize=0.5,
+        z_spacing=1.0,
+        axes_names="czyx",
+        overwrite=True,
+    )
+    return zarr_url
 
 
 @pytest.fixture(scope="session")

@@ -661,6 +661,58 @@
         "title": "CopyLabelsMultiplexing"
       },
       "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
+    },
+    {
+      "name": "ROI Selection",
+      "tags": [
+        "ROI",
+        "Write ROI"
+      ],
+      "docs_info": "### Purpose\n- Stores user-defined ROIs into an ngio OME-Zarr ROI table.\n- Each ROI is defined by two corners in physical coordinates (e.g. micrometers), as reported by the ROI plugin of the Vizarr viewer (deck.gl `info.coordinate`, which already includes the `modelMatrix` transform). X and Y are stored as-is, while Z and T are interpreted as slice/frame indices and converted using the image pixel size.\n- Corners may be given in any order, then the task normalizes them to a positive-extent ROI.\n\n### Outputs\n- A physical-coordinate ROI table (default name `user_ROIs`) written into the OME-Zarr container.\n- With `overwrite=False` and an existing table, new ROIs are appended. A name that already exists raises an error.\n- With `overwrite=True`, the table is replaced.\n\n### Limitations\n- The ROI origin (the corner closest to 0) must fall within the image bounds, otherwise the task raises an error. If the origin is within bounds but the ROI extends past the image, its extent is clamped to the image bounds and a warning is logged.\n- Z/T coordinates are required when the image has the corresponding axis, and are ignored (with a warning) when provided for an axis the image does not have.\n- ROI names must be unique within a single task call.\n- If ROI tables are drawn on an individual OME-Zarr image, take care to run the task just on that image and not on other OME-Zarr images.\n",
+      "type": "parallel",
+      "executable_parallel": "roi_selection_task.py",
+      "meta_parallel": {
+        "cpus_per_task": 1,
+        "mem": 4000
+      },
+      "args_schema_parallel": {
+        "additionalProperties": false,
+        "properties": {
+          "zarr_url": {
+            "title": "Zarr Url",
+            "type": "string",
+            "description": "Path or url to the individual OME-Zarr image to be processed. (standard argument for Fractal tasks, managed by Fractal server)."
+          },
+          "roi_corners": {
+            "items": {
+              "pattern": "^\\{\\s*(?:\"\\w+\"\\s*:\\s*(?:\"[^\"]*\"|\\d+(?:\\.\\d+)?)\\s*,?\\s*)+\\}$",
+              "type": "string"
+            },
+            "title": "Roi Corners",
+            "type": "array",
+            "description": "List of ROIs as JSON string as provided by the Vizarr ROI plugin. X and Y corners are provided in world coordinates (physical units). T and Z are optional and provided as indices."
+          },
+          "output_table_name": {
+            "default": "user_ROIs",
+            "title": "Output Table Name",
+            "type": "string",
+            "description": "Name of the output ROI table to add the ROIs to (will be created if it does not exist yet)"
+          },
+          "overwrite": {
+            "default": false,
+            "title": "Overwrite",
+            "type": "boolean",
+            "description": "Whether to overwrite the output ROI table if it exists. If overwrite is False, ROIs are appended to the existing ROI table (given they come with unique ROI names). If overwrite is set to True, the table is replaced with a fresh ROI table only containing the ROIs provided here."
+          }
+        },
+        "required": [
+          "zarr_url",
+          "roi_corners"
+        ],
+        "type": "object",
+        "title": "RoiSelectionTask"
+      },
+      "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
     }
   ],
   "has_args_schemas": true,

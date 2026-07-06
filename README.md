@@ -33,6 +33,10 @@ Collection of Fractal helper tasks for working with OME-Zarr images in [Fractal]
 
 **Delete Labels and Tables** — Deletes specified label images and/or tables from OME-Zarr images. Entries absent from a given image are silently skipped.
 
+### ROI tasks
+
+**ROI Selection** — Stores user-defined ROIs into an OME-Zarr ROI table. Each ROI is given by two corners in physical coordinates (as reported by the Vizarr viewer ROI plugin); X and Y are stored as-is, while Z and T are treated as slice/frame indices and converted using the image pixel size. Corners may be supplied in any order, ROIs whose origin lies within the image but whose extent overflows are clamped to the image bounds (with a warning) while an origin outside the bounds raises an error, and results are written to a configurable table (default `user_ROIs`) that can be appended to or overwritten.
+
 
 ## Installation instructions
 You can install this task package on Fractal. It's recommended to install it via pixi:

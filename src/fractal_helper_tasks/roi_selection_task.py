@@ -71,21 +71,25 @@ class RoiCorners(BaseModel):
     t2: float | None = None
 
 
-def validate_roi_within_image(roi: Roi, image: Image) -> None:
+def validate_roi_within_image(roi: Roi, image: Image) -> Roi:
     """Validate a physical-space ROI against the image bounds, clamping overflow.
 
-    The ROI is validated (and possibly modified in place) per axis:
+    The ROI is validated per axis:
 
     - If the ROI origin (start) lies outside the image bounds, a ValueError
       is raised.
     - If the origin is within bounds but the ROI extends beyond the image,
       the length is clamped so the ROI ends at the image bound and a warning
-      is logged.
+      is logged. Since ngio 1.1, `Roi`/`RoiSlice` are frozen, so clamping
+      rebuilds the ROI via `update_slice` instead of mutating it.
 
     Args:
-        roi: The ROI in physical coordinates. Modified in place when its
-            extent needs to be clamped to the image bounds.
+        roi: The ROI in physical coordinates.
         image: The ngio Image to validate against.
+
+    Returns:
+        The validated ROI; a rebuilt copy when its extent needed to be
+        clamped to the image bounds, otherwise the input ROI unchanged.
 
     Raises:
         ValueError: If the ROI origin lies outside the image bounds.
@@ -101,18 +105,18 @@ def validate_roi_within_image(roi: Roi, image: Image) -> None:
 
     errors: list[str] = []
 
-    def _check_axis(axis: str, image_len: float | None) -> None:
+    def _check_axis(roi: Roi, axis: str, image_len: float | None) -> Roi:
         if image_len is None:
-            return
+            return roi
         s = roi.get(axis)
         if s is None or s.start is None or s.length is None:
-            return
+            return roi
         if s.start < 0 or s.start > image_len:
             errors.append(
                 f"{axis.upper()} origin {s.start} is outside image bounds "
                 f"[0, {image_len}]"
             )
-            return
+            return roi
         if s.start + s.length > image_len:
             clamped_len = image_len - s.start
             logger.warning(
@@ -126,17 +130,19 @@ def validate_roi_within_image(roi: Roi, image: Image) -> None:
                 s.length,
                 clamped_len,
             )
-            s.length = clamped_len
+            return roi.update_slice(axis, (s.start, clamped_len))
+        return roi
 
-    _check_axis("x", image_x)
-    _check_axis("y", image_y)
-    _check_axis("z", image_z)
-    _check_axis("t", image_t)
+    roi = _check_axis(roi, "x", image_x)
+    roi = _check_axis(roi, "y", image_y)
+    roi = _check_axis(roi, "z", image_z)
+    roi = _check_axis(roi, "t", image_t)
 
     if errors:
         raise ValueError(
             f"ROI '{roi.name}' origin is out of image bounds: {'; '.join(errors)}"
         )
+    return roi
 
 
 def corners_to_roi(corners: RoiCorners, image: Image) -> Roi:
@@ -219,8 +225,7 @@ def corners_to_roi(corners: RoiCorners, image: Image) -> Roi:
         )
 
     roi = Roi.from_values(slices=slices, name=corners.name)
-    validate_roi_within_image(roi, image)
-    return roi
+    return validate_roi_within_image(roi, image)
 
 
 @validate_call

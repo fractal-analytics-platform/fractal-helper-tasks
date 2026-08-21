@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import ngio
-from ngio.ome_zarr_meta.ngio_specs._ngio_hcs import ImageInWellPath
+from ngio import ImageInWellPath
 
 from fractal_helper_tasks.pad_images_to_same_size import pad_images_to_same_size
 

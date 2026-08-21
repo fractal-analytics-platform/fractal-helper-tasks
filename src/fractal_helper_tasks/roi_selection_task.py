@@ -6,7 +6,7 @@ from typing import Annotated
 
 from ngio import Image, OmeZarrContainer, open_ome_zarr_container
 from ngio.common import Roi
-from ngio.tables.v1._roi_table import RoiTableV1
+from ngio.tables import RoiTable
 from pydantic import BaseModel, Field, validate_call
 
 logger = logging.getLogger("roi_selection_task")
@@ -287,13 +287,11 @@ def roi_selection_task(
     table_exists = output_table_name in ome_zarr.list_tables()
 
     if overwrite or not table_exists:
-        table = RoiTableV1(rois=rois)
+        table = RoiTable(rois=rois)
         ome_zarr.add_table(output_table_name, table, overwrite=overwrite)
     else:
         # Append to existing table; raise if any new ROI name already exists
-        existing_table: RoiTableV1 = ome_zarr.get_table_as(
-            output_table_name, RoiTableV1
-        )
+        existing_table: RoiTable = ome_zarr.get_table_as(output_table_name, RoiTable)
         existing_names = {r.name for r in existing_table.rois()}
         new_names = {r.name for r in rois}
         conflicts = existing_names & new_names

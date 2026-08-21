@@ -83,7 +83,7 @@ def add_z_singleton(
 
     new_image_container = new_ome_zarr_container.get_image()
     new_image_container.set_array(image_with_z)
-    new_image_container.consolidate()
+    new_image_container.consolidate(mode="auto")
 
     for table in old_ome_zarr.list_tables():
         logger.info(f"Copying table {table} to new OME-Zarr.")

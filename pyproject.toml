@@ -45,8 +45,7 @@ authors = [
 # Required Python version and dependencies
 requires-python = ">=3.11,<3.14"
 dependencies = [
-    # TODO: relax to a range (e.g. >=1.1.0,<2.0.0) once ngio 1.1.0 final is out
-    "ngio==1.1.0b5",
+    "ngio>=1.1.0,<1.2",
     "fractal-task-tools>=0.5.0,<0.6.0",
     "scikit-image",
     # ngio>=1.1 requires dask[array]>=2025.12, incompatible with the old

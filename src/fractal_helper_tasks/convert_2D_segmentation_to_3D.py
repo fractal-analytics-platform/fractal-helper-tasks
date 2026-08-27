@@ -167,7 +167,7 @@ def convert_2D_segmentation_to_3D(
 
         logger.info(f"Saved {new_label_name} to 3D Zarr at full resolution")
         # 5) Build pyramids for label image
-        new_label_container.consolidate()
+        new_label_container.consolidate(mode="auto")
         logger.info(f"Built a pyramid for the {new_label_name} label image")
 
     else:
@@ -188,8 +188,15 @@ def convert_2D_segmentation_to_3D(
                 table.table_type() == "roi_table"
                 or table.table_type() == "masking_roi_table"
             ):
+                # Replace each ROI with a copy whose z extent covers all
+                # z planes. Since ngio 1.1, mutating the RoiSlice returned
+                # by `roi.get("z")` in place would not be picked up by the
+                # table serialization; `add(..., overwrite=True)` registers
+                # the change.
                 for roi in table.rois():
-                    roi.get("z").length = z_extent
+                    z_slice = roi.get("z")
+                    new_roi = roi.update_slice("z", (z_slice.start, z_extent))
+                    table.add(new_roi, overwrite=True)
                 ome_zarr_container_3d.add_table(
                     name=new_table_names[i],
                     table=table,

@@ -35,8 +35,8 @@ def delete_images_labels_tables(
         zarr_dir: Path to the directory containing the OME-Zarr images.
             (standard argument for Fractal non-parallel tasks).
         images_names_to_delete: Names of images to delete from each OME-Zarr.
-            Checks for each image if it matches any of the listed names. If 
-            yes, it gets deleted (both on disk, removed from Fractal & from 
+            Checks for each image if it matches any of the listed names. If
+            yes, it gets deleted (both on disk, removed from Fractal & from
             a potential HCS plate metadata).
         labels_to_delete: Names of label images to delete from each
             OME-Zarr. Labels absent from a given image are skipped.
@@ -70,9 +70,7 @@ def delete_images_labels_tables(
                 if well is not None and image_name in well.paths():
                     plate_url, row, column = well_url.rsplit("/", 2)
                     plate = ngio.open_ome_zarr_plate(plate_url)
-                    plate.remove_image(
-                        row=row, column=column, image_path=image_name
-                    )
+                    plate.remove_image(row=row, column=column, image_path=image_name)
                     logger.debug(
                         f"Removed {image_name} from well {row}/{column} "
                         f"metadata of plate {plate_url}."
@@ -91,7 +89,7 @@ def delete_images_labels_tables(
     else:
         remaining_zarr_urls = zarr_urls
 
-    # For the remaining zarr_urls after image deletion, clean up labels and 
+    # For the remaining zarr_urls after image deletion, clean up labels and
     # tables
     for url in remaining_zarr_urls:
         container = ngio.open_ome_zarr_container(url)

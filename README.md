@@ -31,7 +31,7 @@ Collection of Fractal helper tasks for working with OME-Zarr images in [Fractal]
 
 **Rename Channels** — Renames channels by supplying a mapping of old → new names. Only updates Zarr metadata; no arrays are rewritten. The mapping may contain more entries than a given image has channels, making it convenient for multiplexing workflows where different images carry different channel subsets.
 
-**Delete Labels and Tables** — Deletes specified label images and/or tables from OME-Zarr images. Entries absent from a given image are silently skipped.
+**Delete Images, Labels and Tables** — Deletes whole OME-Zarr images (selected by name, e.g. `0` or `1_registered`) as well as specified label images and/or tables from OME-Zarr images. Deleted images are removed from disk, from the HCS plate metadata and from the Fractal image list. Label and table entries absent from a given image are silently skipped. All deletions are permanent, so use this task with care.
 
 ### ROI tasks
 

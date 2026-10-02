@@ -67,11 +67,11 @@ TASK_LIST = [
         docs_info="file:docs_info/pad_images_to_same_size.md",
     ),
     NonParallelTask(
-        name="Delete Labels and Tables",
-        executable="delete_labels_tables.py",
+        name="Delete Images, Labels and Tables",
+        executable="delete_images_labels_tables.py",
         meta={"cpus_per_task": 1, "mem": 1000},
-        tags=["Labels", "Tables", "Cleanup"],
-        docs_info="file:docs_info/delete_labels_tables.md",
+        tags=["Images", "Labels", "Tables", "Cleanup", "HCS plate"],
+        docs_info="file:docs_info/delete_images_labels_tables.md",
     ),
     NonParallelTask(
         name="Rename Channels",

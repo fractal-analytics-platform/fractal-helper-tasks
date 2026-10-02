@@ -144,7 +144,7 @@ def rechunk_zarr(
         # Set the highest resolution, then consolidate to build a new pyramid
         new_image = new_ome_zarr_container.get_image()
         new_image.set_array(ome_zarr_container.get_image().get_array(mode="dask"))
-        new_image.consolidate()
+        new_image.consolidate(mode="auto")
     else:
         for path in pyramid_paths:
             new_ome_zarr_container.get_image(path=path).set_array(
@@ -170,7 +170,7 @@ def rechunk_zarr(
             )
             if rebuild_pyramids:
                 new_label.set_array(old_label.get_array(mode="dask"))
-                new_label.consolidate()
+                new_label.consolidate(mode="auto")
             else:
                 label_pyramid_paths = old_label.meta.paths
                 for path in label_pyramid_paths:

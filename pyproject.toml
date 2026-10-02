@@ -45,10 +45,12 @@ authors = [
 # Required Python version and dependencies
 requires-python = ">=3.11,<3.14"
 dependencies = [
-    "ngio>=0.5.12, <0.6.0",
+    "ngio>=1.1.0,<1.2",
     "fractal-task-tools>=0.5.0,<0.6.0",
     "scikit-image",
-    "dask<2025.11.0"
+    # ngio>=1.1 requires dask[array]>=2025.12, incompatible with the old
+    # dask<2025.11.0 cap (which predated ngio 0.5.10's dask unpin)
+    "dask"
 ]
 
 # Optional dependencies (e.g. for `pip install -e ".[dev]"`, see

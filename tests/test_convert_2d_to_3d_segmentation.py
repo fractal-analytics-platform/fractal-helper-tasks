@@ -45,7 +45,7 @@ def create_synthetic_data(zarr_url, zarr_url_3d, label_name, z_spacing=1.0):
         dtype="uint16",
     )
     label_img.set_array(label_array)
-    label_img.consolidate()
+    label_img.consolidate(mode="auto")
 
     image_roi_table = ome_zarr_2d.build_image_roi_table(name="image_ROI_table")
     ome_zarr_2d.add_table(

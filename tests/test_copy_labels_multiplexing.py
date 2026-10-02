@@ -4,7 +4,7 @@ from pathlib import Path
 
 import ngio
 import pytest
-from ngio.ome_zarr_meta.ngio_specs._ngio_hcs import ImageInWellPath
+from ngio import ImageInWellPath
 
 from fractal_helper_tasks.copy_labels_multiplexing import copy_labels_multiplexing
 from fractal_helper_tasks.copy_labels_multiplexing_init import (

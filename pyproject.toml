@@ -102,6 +102,9 @@ ignore = [
     "UP022" # Used in validate_command test, waiting for template fix
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["pydantic.Field"]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["D", "S"]
 

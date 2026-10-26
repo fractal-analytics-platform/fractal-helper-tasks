@@ -593,6 +593,219 @@
       "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
     },
     {
+      "name": "Fix OMERO Metadata",
+      "tags": [
+        "Channels",
+        "Metadata"
+      ],
+      "docs_info": "### Purpose\n- Fixes or rewrites the omero channel metadata (channel names, colors, display ranges) of OME-Zarr images.\n- **Fix omero metadata** (default): keeps all existing omero metadata and fills in missing fields required by the OME-Zarr spec, e.g. channels missing the `window` field. Optionally applies per-channel overrides (color, window, wavelength_id), matched to existing channels by label.\n- **Rewrite omero metadata**: replaces the omero metadata with the provided channels, one entry per channel in the image. Order matters: List the channels in the same order as they are provided in the Zarr. Channels are written with `active: true`, `coefficient: 1` and `inverted: false`. Works whether or not omero metadata already exists.\n- Missing required fields get defaults: the `window` spans the range of the image data type (e.g. 0 - 65535 for uint16, 0 - 1 for float images) and the `color` is picked based on the channel label. The Fractal-specific `wavelength_id` is only set if provided or already present.\n- Edits the Zarr attributes directly, so it works on images that ngio cannot open due to invalid omero metadata.\n\n### Outputs\n- Updated omero metadata in the Zarr attributes of each image.\n\n### Limitations\n- Only handles omero metadata; does not fix other metadata problems.\n- Fix mode requires existing omero metadata with unique channel labels; otherwise use rewrite mode to set it from scratch.\n- Edits Zarr metadata in-place and irreversibly.\n",
+      "type": "non_parallel",
+      "executable_non_parallel": "fix_omero_metadata.py",
+      "meta_non_parallel": {
+        "cpus_per_task": 1,
+        "mem": 1000
+      },
+      "args_schema_non_parallel": {
+        "$defs": {
+          "FixOmeroMetadata": {
+            "description": "Fix existing omero metadata.",
+            "properties": {
+              "mode": {
+                "const": "Fix omero metadata",
+                "default": "Fix omero metadata",
+                "title": "Mode",
+                "type": "string"
+              },
+              "channels": {
+                "default": [],
+                "items": {
+                  "$ref": "#/$defs/OmeroChannel"
+                },
+                "title": "Channels",
+                "type": "array"
+              }
+            },
+            "title": "FixOmeroMetadata",
+            "type": "object"
+          },
+          "OmeroChannel": {
+            "description": "Omero metadata of a single channel.",
+            "properties": {
+              "label": {
+                "title": "Label",
+                "type": "string"
+              },
+              "wavelength_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Wavelength Id"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "pattern": "^[0-9a-fA-F]{6}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Color"
+              },
+              "window": {
+                "$ref": "#/$defs/OmeroWindow",
+                "default": {
+                  "min": null,
+                  "max": null,
+                  "start": null,
+                  "end": null
+                },
+                "title": "Window"
+              }
+            },
+            "required": [
+              "label"
+            ],
+            "title": "OmeroChannel",
+            "type": "object"
+          },
+          "OmeroWindow": {
+            "description": "Display range of an omero channel.",
+            "properties": {
+              "min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Min"
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Max"
+              },
+              "start": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Start"
+              },
+              "end": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "End"
+              }
+            },
+            "title": "OmeroWindow",
+            "type": "object"
+          },
+          "RewriteOmeroMetadata": {
+            "description": "Write new omero metadata from scratch.",
+            "properties": {
+              "mode": {
+                "const": "Rewrite omero metadata",
+                "default": "Rewrite omero metadata",
+                "title": "Mode",
+                "type": "string"
+              },
+              "channels": {
+                "items": {
+                  "$ref": "#/$defs/OmeroChannel"
+                },
+                "minItems": 1,
+                "title": "Channels",
+                "type": "array"
+              }
+            },
+            "required": [
+              "channels"
+            ],
+            "title": "RewriteOmeroMetadata",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "zarr_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Zarr Urls",
+            "type": "array",
+            "description": "Paths to all OME-Zarr images to be processed. (standard argument for Fractal non-parallel tasks)."
+          },
+          "zarr_dir": {
+            "title": "Zarr Dir",
+            "type": "string",
+            "description": "Path to the directory containing the OME-Zarr images. (standard argument for Fractal non-parallel tasks)."
+          },
+          "mode": {
+            "default": {
+              "mode": "Fix omero metadata",
+              "channels": []
+            },
+            "discriminator": {
+              "mapping": {
+                "Fix omero metadata": "#/$defs/FixOmeroMetadata",
+                "Rewrite omero metadata": "#/$defs/RewriteOmeroMetadata"
+              },
+              "propertyName": "mode"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/FixOmeroMetadata"
+              },
+              {
+                "$ref": "#/$defs/RewriteOmeroMetadata"
+              }
+            ],
+            "title": "Mode",
+            "description": "\"Fix omero metadata\" keeps existing metadata, fills in missing required fields and applies optional per-channel overrides (matched by label). Requires existing omero metadata. \"Rewrite omero metadata\" replaces the omero metadata with the provided channels (works with or without existing omero metadata)."
+          }
+        },
+        "required": [
+          "zarr_urls",
+          "zarr_dir"
+        ],
+        "type": "object",
+        "title": "FixOmeroMetadata"
+      },
+      "docs_link": "https://github.com/jluethi/fractal-helper-tasks"
+    },
+    {
       "name": "Copy Labels to Multiplexing Acquisitions (HCS)",
       "tags": [
         "HCS",

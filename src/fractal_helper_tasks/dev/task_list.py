@@ -80,6 +80,13 @@ TASK_LIST = [
         tags=["Channels", "Metadata"],
         docs_info="file:docs_info/rename_channels.md",
     ),
+    NonParallelTask(
+        name="Fix OMERO Metadata",
+        executable="fix_omero_metadata.py",
+        meta={"cpus_per_task": 1, "mem": 1000},
+        tags=["Channels", "Metadata"],
+        docs_info="file:docs_info/fix_omero_metadata.md",
+    ),
     CompoundTask(
         name="Copy Labels to Multiplexing Acquisitions (HCS)",
         executable_init="copy_labels_multiplexing_init.py",
